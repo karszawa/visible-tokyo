@@ -2,7 +2,7 @@ import os
 import json
 
 output = {}
-lines_dir = './original_line_data'
+lines_dir = './original_data'
 
 # add stations on all lines
 for line_file in os.listdir(lines_dir):

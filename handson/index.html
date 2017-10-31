@@ -47,7 +47,7 @@ const map = new google.maps.Map(d3.select("#map").node(), {
 });
 
 // Load the station data. When the data comes back, create an overlay.
-d3.json("./station_data/each_line_data/ginza_subway_line.json", (error, data) => {
+d3.json("./station_data/each_line_dataset/ginza_subway_line.json", (error, data) => {
   if (error) throw error;
 
   const overlay = new google.maps.OverlayView();
