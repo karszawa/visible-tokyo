@@ -3,6 +3,7 @@
 <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
 <style>
 
+
 html, body, #map {
   width: 100%;
   height: 100%;
@@ -33,6 +34,13 @@ html, body, #map {
 <script src="https://d3js.org/d3.v3.min.js"></script>
 <script>
 
+var width = 960,
+        height = 700;
+
+var svg = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height);
+        
 // Create the Google Map…
 var map = new google.maps.Map(d3.select("#map").node(), {
   zoom: 12,
@@ -41,7 +49,7 @@ var map = new google.maps.Map(d3.select("#map").node(), {
 });
 
 // Load the station data. When the data comes back, create an overlay.
-d3.json("stations.json", function(error, data) {
+d3.json("station_data/yamanote_line.json", function(error, data) {
   if (error) throw error;
 
   var overlay = new google.maps.OverlayView();
@@ -84,6 +92,32 @@ d3.json("stations.json", function(error, data) {
             .style("left", (d.x - padding) + "px")
             .style("top", (d.y - padding) + "px");
       }
+
+      svg.append("rect")
+          .attr("x",0)
+          .attr("y",0)
+          .attr("width",130)
+          .attr("height",50)
+          .attr("fill","rgb(119,168,70)");
+
+     svg.append("text")
+        .text("山手線")
+        .attr("x",30)
+        .attr("y",30);
+
+     svg.append("rect")
+          .attr("x",130)
+          .attr("y",0)
+          .attr("width",130)
+          .attr("height",50)
+          .attr("fill","rgb(243,151,95)");
+     svg.append("text")
+          .text("銀座線")
+          .attr("x",160)
+          .attr("y",30);
+    };
+  };
+
     };
   };
 
