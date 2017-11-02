@@ -1,7 +1,7 @@
 import os
 import json
 
-output = {}
+output = []
 lines_dir = './original_data'
 
 # add stations on all lines
@@ -12,10 +12,13 @@ for line_file in os.listdir(lines_dir):
         line = json_dict['line_name']
         stations = json_dict['station_l']
 
-        tmp = {}
         for station in stations:
-            tmp[station['station_name']] = [station['lon'], station['lat'], station['station_name']]
-        output[line] = tmp
+            output.append({
+                'name':station['station_name'],
+                'lng':station['lon'],
+                'lat':station['lat'],
+                'line':line
+            })
 
 print(output)
 
