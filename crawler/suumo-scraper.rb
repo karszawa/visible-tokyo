@@ -15,6 +15,7 @@ cassettes = []
 
 Dir.open('./html').each do |file|
   next unless file.end_with?('.html')
+  STDERR.puts "Processing #{file}"
 
   match_data = file.match(/(\d+)-(\d+)\.html$/)
 
