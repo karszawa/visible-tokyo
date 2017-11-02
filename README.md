@@ -4,6 +4,29 @@
 
 唐澤弘明, 嶋田紅緒, 山田万太郎
 
+## 特徴
+
+- 住宅探しの観点から東京都の各地域の特色を可視化する
+- ひとめで地域ごとの特色がわかる地図を表示する
+- 上京してきた大学生の引越しに役立てたい
+
+## 使用データ
+
+優先度順
+
+- 間取りごとの家賃
+  - Home'sのAPIが使えるかもしれない
+  - 先方の返事待ち
+- 駅までの距離
+  - 100m、300m、600mの同心円を表示する
+  - http://www.ekidata.jp/api/api_line.php
+- 犯罪の発生件数
+  - 表示方法未定
+  - http://www.keishicho.metro.tokyo.jp/about_mpd/jokyo_tokei/jokyo/ninchikensu.html
+- 勾配
+  - ヒートマップ
+  - https://fgd.gsi.go.jp/download/menu.php
+
 ## Pear review feedbacks
 
 - 治安どうやって測る？　->　殺人なら100，万引きなら1みたいにするとか
@@ -17,19 +40,3 @@
 - 交通機関可視化できたら面白そう　->　区切りがむずそう
 - エリアごとの駅の数がわかるといいかな
 - 土地代があるといいかも　（家賃ではなく
-
-## メイン機能
-ひとめで地域ごとの特色がわかる地図を表示する
-- 上京してきた大学生の引越しに役立てたい
-
-特色として「家賃相場」「駅からのアクセス時間」
-- 地域ごとの犯罪率も手をつけられたら良い
-
-### 家賃相場
-- Home'sのAPIが使えるかまだ不明，先方の返事待ち
-
-### 駅からのアクセス時間
-- 路線APIから駅の情報をとる　http://www.ekidata.jp/api/api_line.php
-
-### 犯罪率
-- 警視庁の公表している犯罪発生状況データを用いる　http://www.keishicho.metro.tokyo.jp/about_mpd/jokyo_tokei/jokyo/ninchikensu.html
