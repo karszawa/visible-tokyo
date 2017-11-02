@@ -33,8 +33,6 @@ Dir.open('./html').each do |file|
       cassettes << Cassette.new(place, floor_plan, rent)
     end
   end
-
-  break
 end
 
 puts '{'
@@ -44,3 +42,5 @@ puts cassettes.map { |cassette|
 }.join(",\n")
 
 puts '}'
+
+STDERR.puts "Output #{cassettes.size} datasets"
