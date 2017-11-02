@@ -13,12 +13,12 @@ for line_file in os.listdir(lines_dir):
         stations = json_dict['station_l']
 
         for station in stations:
-            tmp = {}
-            tmp['name'] = station['station_name']
-            tmp['lon'] = station['lon']
-            tmp['lat'] = station['lat']
-            tmp['line'] = line
-            output.append(tmp)
+            output.append({
+                'name':station['station_name'],
+                'lng':station['lon'],
+                'lat':station['lat'],
+                'line':line
+            })
 
 print(output)
 
