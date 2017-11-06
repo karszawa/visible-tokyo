@@ -13,7 +13,7 @@ html, body, #map {
 
 #line_check {
   position: absolute;
-  width: 150px;
+  width: 160px;
   height: 350px;
   background-color: rgba(255, 255, 255, 0.85);
   top: 60px;
@@ -68,33 +68,34 @@ d3.json("./data/all_stations.json", (error, data) => {
   checkBox = [];
   checked = {};
   label = [];
+  legend = [];
   const line_data = [
-    {name:'JR山手線', color: 'rgb(119,168,70)'},
-    {name:'JR中央線(快速)', color: 'rgb(243,151,95)'},
-    {name:'JR中央・総武線'},
-    {name:'東京メトロ銀座線'},
-    {name:'東京メトロ丸ノ内線'},
-    {name:'東京メトロ日比谷線'},
-    {name:'東京メトロ東西線'},
-    {name:'東京メトロ千代田線'},
-    {name:'東京メトロ有楽町線'},
-    {name:'東京メトロ半蔵門線'},
-    {name:'東京メトロ南北線'},
-    {name:'東京メトロ副都心線'},
-    {name:'都営大江戸線'},
-    {name:'都営浅草線'},
-    {name:'都営三田線'},
-    {name:'都営新宿線'},
-    {name:'京王井の頭線'},
+    {name:'JR山手線', color:'#77A846'},
+    {name:'JR中央線(快速)', color:'#FF8000'},
+    {name:'JR中央・総武線', color:'#FFFF00'},
+    {name:'東京メトロ銀座線', color:'#F3975F'},
+    {name:'東京メトロ丸ノ内線', color:'#FF0000'},
+    {name:'東京メトロ日比谷線', color:'#9caeb7'},
+    {name:'東京メトロ東西線', color:'#00a7db'},
+    {name:'東京メトロ千代田線', color:'#009944'},
+    {name:'東京メトロ有楽町線', color:'#d7c447'},
+    {name:'東京メトロ半蔵門線', color:'#9b7cb6'},
+    {name:'東京メトロ南北線', color:'#00ada9'},
+    {name:'東京メトロ副都心線', color:'#bb641d'},
+    {name:'都営大江戸線', color:'#b6007a'},
+    {name:'都営浅草線', color:'#e85298'},
+    {name:'都営三田線', color:'#0079c2'},
+    {name:'都営新宿線', color:'#6cbb5a'},
+    {name:'京王井の頭線', color:'#555555'},
   ];
 
   // create area to select lines
-  var svg = d3.select("#line_check").append("svg").attr("width", 150).attr("height", 350);
+  var svg = d3.select("#line_check").append("svg").attr("width", 160).attr("height", 350);
 
   line_data.forEach((line, i) => {
     // create checkbox
     checkBox.push(new d3CheckBox());
-    checkBox[i].size(15).x(8).y(8+i*20).rx(4).ry(4).markStrokeWidth(2).boxStrokeWidth(2).checked(false).clickEvent(function(){
+    checkBox[i].size(15).x(25).y(8+i*20).rx(4).ry(4).markStrokeWidth(2).boxStrokeWidth(2).checked(false).clickEvent(function(){
       line_data.forEach((line, i) => {
         checked[line.name] = checkBox[i].checked();
       })
@@ -104,7 +105,13 @@ d3.json("./data/all_stations.json", (error, data) => {
     svg.call(checkBox[i]);
 
     // create text
-    label[i] = svg.append("text").attr("x", 30).attr("y", 20+i*20).attr("font-size", 12).text(line.name);
+    label[i] = svg.append("text").attr("x", 45).attr("y", 20+i*20).attr("font-size", 12).text(line.name);
+    legend[i] = svg.append("circle")
+                    .attr("cx", 12)
+                    .attr("cy", 15+i*20)
+                    .attr("r", 8)
+                    .attr("stroke", "black")
+                    .attr("fill", line.color);
   })
 
   // select data depend on line
@@ -123,13 +130,21 @@ d3.json("./data/all_stations.json", (error, data) => {
   function draw_circle(station_data) {
     circles = [];
     Object.values(select_line(data)).forEach((position) => {
+      function get_color(line) {
+        console.log(line);
+        for(let l of line_data){
+          if(l.name == line){
+            return l.color;
+          }
+        }
+      }
       [ 0, 1, 2 ].forEach((i) => {
         const options = {
           map: map,
           center: new google.maps.LatLng(position['lat'], position['lng']),
           radius: [ 100, 300, 600 ][i],
           strokeOpacity: 0.1,
-          fillColor: '#0000FF',
+          fillColor: get_color(position['line']),
           fillOpacity: 0.7 - i * 0.2
         };
 
