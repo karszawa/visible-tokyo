@@ -47,9 +47,37 @@ const map = new google.maps.Map(d3.select("#map").node(), {
   mapTypeId: google.maps.MapTypeId.TERRAIN
 });
 
-d3.json("../data/tokyo.topojson", (data) => {
+d3.json("./tokyo.topojson", (data) => {
   geoJsonObject = topojson.feature(data, data.objects.tokyo)
   map.data.addGeoJson(geoJsonObject);
+
+  map.data.setStyle((feature) => {
+    console.log(`${feature.f.MOJI} ${feature.f.SETAI} ${feature.f.AREA / feature.f.SETAI}`);
+
+    if (feature.getProperty('type') === 'point') {
+      // マーカーの処理は関数を使って処理
+      return {
+        icon: getMarkerColor(feature.getProperty('color')),
+      };
+    } else if (feature.getProperty('type') === 'polyline') {
+      // ポリラインの処理
+      return {
+        strokeColor: 'green', // feature.getProperty('color'),
+        strokeWeight: 20,
+        clickable: true,
+        zIndex: 1
+      };
+    } else {
+      // ポリゴンの処理
+      return {
+        fillColor: `rgb(${feature.f.SETAI / 3000 * 255}, 0, 0)`, //feature.getProperty('color'),
+        fillOpacity: 0.5,
+        strokeWeight: 0,
+        clickable: true,
+        zIndex: 1
+      };
+    }
+  });
 });
 
 // Load the station data. When the data comes back, create an overlay.
