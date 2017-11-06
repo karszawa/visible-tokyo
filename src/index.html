@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+<style>
+
+html, body, #map {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.stations, .stations svg {
+  position: absolute;
+}
+
+.stations svg {
+  overflow: visible;
+  padding-right: 100px;
+  font: 10px sans-serif;
+}
+
+.stations circle {
+  fill: brown;
+  stroke: black;
+  stroke-width: 1.5px;
+}
+
+</style>
+<div id="map"></div>
+<script src="https://maps.google.com/maps/api/js?sensor=true"></script>
+<script src="https://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script>
+
+const width = 960;
+const height = 700;
+
+const svg = d3.select("body").append("svg")
+  .attr("width", width)
+  .attr("height", height);
+
+// Create the Google Map…
+const map = new google.maps.Map(d3.select("#map").node(), {
+  zoom: 12,
+  center: new google.maps.LatLng(35.681167, 139.767052),
+  mapTypeId: google.maps.MapTypeId.TERRAIN
+});
+
+d3.json("../data/tokyo.topojson", (data) => {
+  geoJsonObject = topojson.feature(data, data.objects.tokyo)
+  map.data.addGeoJson(geoJsonObject);
+});
+
+// Load the station data. When the data comes back, create an overlay.
+d3.json("./station_data/each_line_dataset/ginza_subway_line.json", (error, data) => {
+  if (error) throw error;
+
+  const overlay = new google.maps.OverlayView();
+
+  Object.values(data).forEach((position) => {
+    [ 0, 1, 2 ].forEach((i) => {
+      const options = {
+        map: map,
+        center: new google.maps.LatLng(position[1], position[0]),
+        radius: [ 100, 300, 600 ][i],
+        strokeOpacity: 0.1,
+        fillColor: '#FF0000',
+        fillOpacity: 0.7 - i * 0.2
+      };
+
+      const circle = new google.maps.Circle(options);
+    });
+  });
+
+  // Add the container when the overlay is added to the map.
+  overlay.onAdd = function() {
+    const layer = d3.select(this.getPanes().overlayLayer).append("div")
+      .attr("class", "stations");
+
+    // Draw each marker as a separate SVG element.
+    // We could use a single SVG, but what size would it have?
+    overlay.draw = () => {
+      const projection = this.getProjection();
+
+      const marker = layer.selectAll("svg")
+        .data(d3.entries(data))
+        .each(transform) // update existing markers
+        .enter().append("svg")
+        .each(transform)
+        .attr("class", "marker");
+
+      // Add a label.
+      marker.append("text")
+        .attr("x", 7)
+        .attr("y", 0)
+        .attr("dy", ".31em")
+        .text((d) => { return d.key; });
+
+      function transform(d) {
+        d = new google.maps.LatLng(d.value[1], d.value[0]);
+        d = projection.fromLatLngToDivPixel(d);
+
+        return d3.select(this).style("left", `${d.x}px`).style("top", `${d.y}px`);
+      }
+
+      const line_data = [
+        { name: '山手線', color: 'rgb(119,168,70)' },
+        { name: '銀座線', color: 'rgb(243,151,95)' }
+      ];
+
+      line_data.forEach((line, i) => {
+        svg.append("rect")
+          .attr("x", i * 130)
+          .attr("y", 0)
+          .attr("width", 130)
+          .attr("height", 50)
+          .attr("fill", line.color);
+
+        svg.append("text")
+          .text(line.name)
+          .attr("x", 30 + 130 * i)
+          .attr("y", 30);
+      })
+    };
+  };
+
+  // Bind our overlay to the map…
+  overlay.setMap(map);
+});
+
+</script>
