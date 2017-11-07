@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+<style>
+
+html, body, #map {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#line_check {
+  position: absolute;
+  width: 160px;
+  height: 350px;
+  background-color: rgba(255, 255, 255, 0.85);
+  top: 60px;
+  bottom: 20px;
+  left: 10px;
+  margin: 0;
+  padding: 0;
+}
+
+.stations, .stations svg {
+  position: absolute;
+}
+
+.stations svg {
+  overflow: visible;
+  padding-right: 100px;
+  font: 10px sans-serif;
+}
+
+.stations circle {
+  fill: brown;
+  stroke: black;
+  stroke-width: 1.5px;
+}
+
+</style>
+<div id="map"></div>
+<div id="line_check"></div>
+<script src="https://maps.google.com/maps/api/js?sensor=true"></script>
+<script src="https://d3js.org/d3.v3.min.js"></script>
+<script src="d3CheckBox.js"></script>
+
+<script>
+
+const width = 960;
+const height = 700;
+
+// Create the Google Map…
+const map = new google.maps.Map(d3.select("#map").node(), {
+  zoom: 12,
+  center: new google.maps.LatLng(35.681167, 139.767052),
+  mapTypeId: google.maps.MapTypeId.TERRAIN
+});
+
+// Load the station data. When the data comes back, create an overlay.
+d3.json("./data/all_stations.json", (error, data) => {
+  if (error) throw error;
+
+  const overlay = new google.maps.OverlayView();
+
+  checkBox = [];
+  checked = {};
+  label = [];
+  legend = [];
+  const line_data = [
+    {name:'JR山手線', color:'#77A846'},
+    {name:'JR中央線(快速)', color:'#FF8000'},
+    {name:'JR中央・総武線', color:'#FFFF00'},
+    {name:'東京メトロ銀座線', color:'#F3975F'},
+    {name:'東京メトロ丸ノ内線', color:'#FF0000'},
+    {name:'東京メトロ日比谷線', color:'#9caeb7'},
+    {name:'東京メトロ東西線', color:'#00a7db'},
+    {name:'東京メトロ千代田線', color:'#009944'},
+    {name:'東京メトロ有楽町線', color:'#d7c447'},
+    {name:'東京メトロ半蔵門線', color:'#9b7cb6'},
+    {name:'東京メトロ南北線', color:'#00ada9'},
+    {name:'東京メトロ副都心線', color:'#bb641d'},
+    {name:'都営大江戸線', color:'#b6007a'},
+    {name:'都営浅草線', color:'#e85298'},
+    {name:'都営三田線', color:'#0079c2'},
+    {name:'都営新宿線', color:'#6cbb5a'},
+    {name:'京王井の頭線', color:'#555555'},
+  ];
+
+  // create area to select lines
+  var svg = d3.select("#line_check").append("svg").attr("width", 160).attr("height", 350);
+
+  line_data.forEach((line, i) => {
+    // create checkbox
+    checkBox.push(new d3CheckBox());
+    checkBox[i].size(15).x(25).y(8+i*20).rx(4).ry(4).markStrokeWidth(2).boxStrokeWidth(2).checked(false).clickEvent(function(){
+      line_data.forEach((line, i) => {
+        checked[line.name] = checkBox[i].checked();
+      })
+      overlay.draw();
+    });
+    checked[line.name] = checkBox[i].checked();
+    svg.call(checkBox[i]);
+
+    // create text
+    label[i] = svg.append("text").attr("x", 45).attr("y", 20+i*20).attr("font-size", 12).text(line.name);
+    legend[i] = svg.append("circle")
+                    .attr("cx", 12)
+                    .attr("cy", 15+i*20)
+                    .attr("r", 8)
+                    .attr("stroke", null)
+                    .attr("fill", line.color);
+  })
+
+  // select data depend on line
+  function select_line(all_data) {
+    selected_data = [];
+    for(let v of all_data){
+      if(checked[v.line]){
+        selected_data.push(v);
+      }
+    }
+    return selected_data;
+  }
+
+  circles = [];
+
+  function draw_circle(station_data) {
+    circles = [];
+    Object.values(select_line(data)).forEach((position) => {
+      function get_color(line) {
+        console.log(line);
+        for(let l of line_data){
+          if(l.name == line){
+            return l.color;
+          }
+        }
+      }
+      [ 0, 1, 2 ].forEach((i) => {
+        const options = {
+          map: map,
+          center: new google.maps.LatLng(position['lat'], position['lng']),
+          radius: [ 100, 300, 600 ][i],
+          strokeOpacity: 0.1,
+          fillColor: get_color(position['line']),
+          fillOpacity: 0.7 - i * 0.2
+        };
+
+        circles.push(new google.maps.Circle(options));
+      });
+    });
+    return circles;
+  }
+
+  function delete_circle(circles) {
+    for(let circle of circles){
+      circle.setMap(null);
+    }
+  }
+
+  // Add the container when the overlay is added to the map.
+  overlay.onAdd = function() {
+    const layer = d3.select(this.getPanes().overlayLayer).append("div")
+      .attr("class", "stations");
+
+    const projection = this.getProjection();
+
+    overlay.draw = () => {
+      delete_circle(circles);
+      circles = draw_circle(select_line(data));
+    };
+  };
+
+  // Bind our overlay to the map…
+  overlay.setMap(map);
+});
+
+</script>
