@@ -39,7 +39,9 @@ hash.each do |place, plans|
   plans.each do |plan, rents|
     rents = rents.map(&:to_f)
 
-    result[place] = {
+    result[place] = [] unless result[place]
+
+    result[place] << {
       place: place,
       plan: plan,
       sample_size: rents.size,
