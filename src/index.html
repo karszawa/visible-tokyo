@@ -29,132 +29,175 @@ html, body, #map {
 </style>
 <div id="map"></div>
 <script src="https://maps.google.com/maps/api/js?sensor=true"></script>
-<script src="https://d3js.org/d3.v3.min.js"></script>
-<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script src="./d3.v4.min.js"></script>
+<script src="./topojson.v1.min.js"></script>
 <script>
 
-const width = 960;
-const height = 700;
+target_plans = [ '1K', 'ワンルーム', '1DK' ]
 
-const svg = d3.select("body").append("svg")
-  .attr("width", width)
-  .attr("height", height);
-
-// Create the Google Map…
-const map = new google.maps.Map(d3.select("#map").node(), {
-  zoom: 12,
-  center: new google.maps.LatLng(35.681167, 139.767052),
-  mapTypeId: google.maps.MapTypeId.TERRAIN
-});
-
-d3.json("./tokyo.topojson", (data) => {
-  geoJsonObject = topojson.feature(data, data.objects.tokyo)
-  map.data.addGeoJson(geoJsonObject);
-
-  map.data.setStyle((feature) => {
-    console.log(`${feature.f.MOJI} ${feature.f.SETAI} ${feature.f.AREA / feature.f.SETAI}`);
-
-    if (feature.getProperty('type') === 'point') {
-      // マーカーの処理は関数を使って処理
-      return {
-        icon: getMarkerColor(feature.getProperty('color')),
-      };
-    } else if (feature.getProperty('type') === 'polyline') {
-      // ポリラインの処理
-      return {
-        strokeColor: 'green', // feature.getProperty('color'),
-        strokeWeight: 20,
-        clickable: true,
-        zIndex: 1
-      };
-    } else {
-      // ポリゴンの処理
-      return {
-        fillColor: `rgb(${feature.f.SETAI / 3000 * 255}, 0, 0)`, //feature.getProperty('color'),
-        fillOpacity: 0.5,
-        strokeWeight: 0,
-        clickable: true,
-        zIndex: 1
-      };
+var sum = function(arr, fn) {
+    if (fn) {
+        return sum(arr.map(fn));
     }
+    else {
+        return arr.reduce(function(prev, current, i, arr) {
+                return prev+current;
+        }, 0);
+    }
+};
+
+var average = function(arr, fn) {
+    return sum(arr, fn)/arr.length;
+};
+
+document.addEventListener("DOMContentLoaded", (event) => {
+  const width = 960;
+  const height = 700;
+
+  const svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+  // Create the Google Map…
+  const map = new google.maps.Map(d3.select("#map").node(), {
+    zoom: 12,
+    center: new google.maps.LatLng(35.681167, 139.767052),
+    mapTypeId: google.maps.MapTypeId.TERRAIN
   });
-});
 
-// Load the station data. When the data comes back, create an overlay.
-d3.json("./station_data/each_line_dataset/ginza_subway_line.json", (error, data) => {
-  if (error) throw error;
+  var infowindow = new google.maps.InfoWindow();
+  let suumo = null;
 
-  const overlay = new google.maps.OverlayView();
+  function getPrice(feature) {
+    const moji = (feature.f.MOJI || "");
+    const place = '東京都' + feature.f.GST_NAME + moji.slice(0, moji.endsWith('丁目') ? -2 : moji.length);
+    const filtered = (suumo[place] || []).filter((obj) => target_plans.includes(obj.plan));
+    const avg = average(filtered, obj => obj.rent_mean);
 
-  Object.values(data).forEach((position) => {
-    [ 0, 1, 2 ].forEach((i) => {
-      const options = {
-        map: map,
-        center: new google.maps.LatLng(position[1], position[0]),
-        radius: [ 100, 300, 600 ][i],
-        strokeOpacity: 0.1,
-        fillColor: '#FF0000',
-        fillOpacity: 0.7 - i * 0.2
-      };
+    return avg;
+  }
 
-      const circle = new google.maps.Circle(options);
+  d3.json("./suumo.json", (sm) => {
+    suumo = JSON.parse(sm);
+
+    d3.json("./tokyo.topojson", (data) => {
+      geoJsonObject = topojson.feature(data, data.objects.tokyo)
+      map.data.addGeoJson(geoJsonObject);
+
+      map.data.addListener('click', (event) => {
+        var myHTML = `${event.feature.f.GST_NAME + event.feature.f.MOJI}<br>${Math.round(getPrice(event.feature) * 10) / 10}万円`;
+        infowindow.setContent("<div style='width:150px; text-align: center;'>"+myHTML+"</div>");
+        let position = null;
+        event.feature.getGeometry().forEachLatLng((pos) => position = pos)
+        infowindow.setPosition(position);
+        infowindow.setOptions({pixelOffset: new google.maps.Size(0,-30)});
+        infowindow.open(map);
+      });
+
+      map.data.setStyle((feature) => {
+        const avg = getPrice(feature);
+        const color = (avg - 5) * 25;
+
+        if (feature.getProperty('type') === 'point') {
+          return {
+            icon: getMarkerColor('red'),
+          };
+        } else if (feature.getProperty('type') === 'polyline') {
+          return {
+            strokeColor: 'green',
+            strokeWeight: 20,
+            clickable: true,
+            zIndex: 1
+          };
+        } else {
+          return {
+            fillColor: `rgb(${color}, 0, 0)`,
+            fillOpacity: (isNaN(avg) ? 0 : 0.5),
+            strokeWeight: 0,
+            clickable: true,
+            zIndex: 1
+          };
+        }
+      });
     });
   });
 
-  // Add the container when the overlay is added to the map.
-  overlay.onAdd = function() {
-    const layer = d3.select(this.getPanes().overlayLayer).append("div")
-      .attr("class", "stations");
+  // Load the station data. When the data comes back, create an overlay.
+  d3.json("./station_data/each_line_dataset/ginza_subway_line.json", (error, data) => {
+    if (error) throw error;
 
-    // Draw each marker as a separate SVG element.
-    // We could use a single SVG, but what size would it have?
-    overlay.draw = () => {
-      const projection = this.getProjection();
+    const overlay = new google.maps.OverlayView();
 
-      const marker = layer.selectAll("svg")
-        .data(d3.entries(data))
-        .each(transform) // update existing markers
-        .enter().append("svg")
-        .each(transform)
-        .attr("class", "marker");
+    Object.values(data).forEach((position) => {
+      [ 0, 1, 2 ].forEach((i) => {
+        const options = {
+          map: map,
+          center: new google.maps.LatLng(position[1], position[0]),
+          radius: [ 100, 300, 600 ][i],
+          strokeOpacity: 0.1,
+          fillColor: '#FF0000',
+          fillOpacity: 0.7 - i * 0.2
+        };
 
-      // Add a label.
-      marker.append("text")
-        .attr("x", 7)
-        .attr("y", 0)
-        .attr("dy", ".31em")
-        .text((d) => { return d.key; });
+        const circle = new google.maps.Circle(options);
+      });
+    });
 
-      function transform(d) {
-        d = new google.maps.LatLng(d.value[1], d.value[0]);
-        d = projection.fromLatLngToDivPixel(d);
+    // Add the container when the overlay is added to the map.
+    overlay.onAdd = function() {
+      const layer = d3.select(this.getPanes().overlayLayer).append("div")
+        .attr("class", "stations");
 
-        return d3.select(this).style("left", `${d.x}px`).style("top", `${d.y}px`);
-      }
+      // Draw each marker as a separate SVG element.
+      // We could use a single SVG, but what size would it have?
+      overlay.draw = () => {
+        const projection = this.getProjection();
 
-      const line_data = [
-        { name: '山手線', color: 'rgb(119,168,70)' },
-        { name: '銀座線', color: 'rgb(243,151,95)' }
-      ];
+        const marker = layer.selectAll("svg")
+          .data(d3.entries(data))
+          .each(transform) // update existing markers
+          .enter().append("svg")
+          .each(transform)
+          .attr("class", "marker");
 
-      line_data.forEach((line, i) => {
-        svg.append("rect")
-          .attr("x", i * 130)
+        // Add a label.
+        marker.append("text")
+          .attr("x", 7)
           .attr("y", 0)
-          .attr("width", 130)
-          .attr("height", 50)
-          .attr("fill", line.color);
+          .attr("dy", ".31em")
+          .text((d) => { return d.key; });
 
-        svg.append("text")
-          .text(line.name)
-          .attr("x", 30 + 130 * i)
-          .attr("y", 30);
-      })
+        function transform(d) {
+          d = new google.maps.LatLng(d.value[1], d.value[0]);
+          d = projection.fromLatLngToDivPixel(d);
+
+          return d3.select(this).style("left", `${d.x}px`).style("top", `${d.y}px`);
+        }
+
+        const line_data = [
+          { name: '山手線', color: 'rgb(119,168,70)' },
+          { name: '銀座線', color: 'rgb(243,151,95)' }
+        ];
+
+        line_data.forEach((line, i) => {
+          svg.append("rect")
+            .attr("x", i * 130)
+            .attr("y", 0)
+            .attr("width", 130)
+            .attr("height", 50)
+            .attr("fill", line.color);
+
+          svg.append("text")
+            .text(line.name)
+            .attr("x", 30 + 130 * i)
+            .attr("y", 30);
+        })
+      };
     };
-  };
 
-  // Bind our overlay to the map…
-  overlay.setMap(map);
+    // Bind our overlay to the map…
+    overlay.setMap(map);
+  });
 });
 
 </script>
