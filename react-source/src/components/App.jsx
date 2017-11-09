@@ -1,6 +1,6 @@
 import React from 'react';
 import { compose, withProps } from 'recompose';
-import { withScriptjs, withGoogleMap, GoogleMap, Marker, Polygon } from 'react-google-maps';
+import { withScriptjs, withGoogleMap, GoogleMap, Marker, Polygon, InfoWindow } from 'react-google-maps';
 import { SearchBox } from 'react-google-maps/lib/components/places/SearchBox';
 import GoogleMapLoader from 'react-google-maps-loader';
 import { SearchInput, ControlButtonWrapper, ControlButton } from './App.components';
@@ -101,25 +101,34 @@ class RentMap extends React.Component {
     super(props);
 
     this.state = {
-      targets: [ 15, 20 ]
+      targets: [ 15, 20 ],
+      target: null
     };
   }
 
   render() {
+    console.log(this.state);
+
     const polygons = GeoJSON.features.map((feature, i) => {
       const paths = feature.geometry.coordinates[0].map(ary => { return { lat: ary[1], lng: ary[0] } });
       const avg = this.getPriceFromFeature(feature);
       const color = (avg - 5) * 25;
-      console.log(avg);
+      const target = {
+        key: feature.properties.H27KA13_ID,
+        position: { lat: feature.properties.Y_CODE, lng: feature.properties.X_CODE },
+        location: this.getLocationFromFeature(feature),
+        rent: avg
+      };
 
       return (
         <Polygon
           key={ feature.properties.H27KA13_ID }
           paths={ paths }
+          onClick={ () => this.setState({ target: target }) }
           options={{
-            strokeColor: '#000000',
-            strokeOpacity: 0,
-            strokeWeight: 0,
+              strokeColor: '#000000',
+              strokeOpacity: 0,
+              strokeWeight: 0,
             fillColor: `rgb(${color}, 0, 0)`,
             fillOpacity: isNaN(avg) ? 0 : 0.35
           }}
@@ -127,17 +136,35 @@ class RentMap extends React.Component {
       );
     });
 
+    const infoWindow = ( this.state.target &&
+      <InfoWindow
+        key={this.state.target.key}
+        position={ this.state.target.position }
+        onCloseClick={ () => this.setState({ target: null }) }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <span>{ this.state.target.location }</span>
+          <span>{ Math.floor(this.state.target.rent * 10) / 10 }万円</span>
+        </div>
+      </InfoWindow>
+    );
+
     return [
-      polygons
+      polygons,
+      infoWindow
     ];
   }
 
-  getPriceFromFeature(feature) {
-    const place = [
+  getLocationFromFeature(feature) {
+    return [
       feature.properties.KEN_NAME,
       feature.properties.GST_NAME,
       feature.properties.MOJI
     ].join('').replace(/丁目$/, '');
+  }
+
+  getPriceFromFeature(feature) {
+    const place = this.getLocationFromFeature(feature);
     const filtered = (Suumo[place] || []).filter(obj =>
       this.state.targets.some(lowerBound => lowerBound <= obj.area && obj.area <= lowerBound + 5)
     );
@@ -164,7 +191,8 @@ class App extends React.Component {
 
     this.state = {
       mapType: MAP_TYPE_RENT,
-      destination: null
+      destination: null,
+      zoom: 11
     };
   }
 
@@ -173,8 +201,7 @@ class App extends React.Component {
 
   onPlacesChanged(place) {
     this.googleMap.panTo(place);
-    this.googleMap.setZoom(14);
-    this.setState({ destination: place });
+    this.setState({ destination: place, zoom: 15 });
   }
 
   onClickControlBox(mapType) {
@@ -188,6 +215,7 @@ class App extends React.Component {
         defaultZoom={11}
         defaultCenter={{ lat: 35.71215, lng: 139.7626531 }}
         ref={ e => this.googleMap = e }
+        zoom={ this.state.zoom }
       >
         <CustomSearchBox
           onPlacesChanged={ ::this.onPlacesChanged }
