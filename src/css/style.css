@@ -86,3 +86,114 @@
   background-color: #FF8000;
 }
 
+.check3:after {
+  content: "\f00c";
+  background-color: rgba(165, 194, 92, 0);
+}
+.check3.is-checked:after {
+  background-color: #FFFF00;
+}
+.check4:after {
+  content: "\f00c";
+  background-color: rgba(165, 194, 92, 0);
+}
+.check4.is-checked:after {
+  background-color: #F3975F;
+}
+.check5:after {
+  content: "\f00c";
+  background-color: rgba(165, 194, 92, 0);
+}
+.check5.is-checked:after {
+  background-color: #FF0000;
+}
+.check6:after {
+  content: "\f00c";
+  background-color: rgba(165, 194, 92, 0);
+}
+.check6.is-checked:after {
+  background-color: #9caeb7;
+}
+.check7:after {
+  content: "\f00c";
+  background-color: rgba(165, 194, 92, 0);
+}
+.check7.is-checked:after {
+  background-color: #00a7db;  
+ } 
+
+ .check8:after {
+  content: "\f00c";
+  background-color: rgba(165, 194, 92, 0);
+}
+.check8.is-checked:after {
+  background-color: #009944;  
+ } 
+
+ .check9:after {
+  content: "\f00c";
+  background-color: rgba(165, 194, 92, 0);
+}
+.check9.is-checked:after {
+  background-color: #d7c447;  
+ } 
+
+ .check10:after {
+  content: "\f00c";
+  background-color: rgba(165, 194, 92, 0);
+}
+.check10.is-checked:after {
+  background-color: #9b7cb6;  
+ } 
+
+.check11:after {
+  content: "\f00c";
+  background-color: rgba(165, 194, 92, 0);
+}
+.check11.is-checked:after {
+  background-color: #00ada9;
+}
+
+.check12:after {
+  content: "\f00c";
+  background-color: rgba(165, 194, 92, 0);
+}
+.check12.is-checked:after {
+  background-color: #bb641d;
+}
+
+.check13:after {
+  content: "\f00c";
+  background-color: rgba(165, 194, 92, 0);
+}
+.check13.is-checked:after {
+  background-color: #b6007a;
+}
+.check14:after {
+  content: "\f00c";
+  background-color: rgba(165, 194, 92, 0);
+}
+.check14.is-checked:after {
+  background-color: #e85298;
+}
+.check15:after {
+  content: "\f00c";
+  background-color: rgba(165, 194, 92, 0);
+}
+.check15.is-checked:after {
+  background-color: #0079c2;
+}
+.check16:after {
+  content: "\f00c";
+  background-color: rgba(165, 194, 92, 0);
+}
+.check16.is-checked:after {
+  background-color: #6cbb5a;
+}
+.check17:after {
+  content: "\f00c";
+  background-color: rgba(165, 194, 92, 0);
+}
+.check17.is-checked:after {
+  background-color: #555555;  
+ } 
