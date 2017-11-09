@@ -1,13 +1,15 @@
 require 'pry'
+require 'json'
 require 'nokogiri'
 
 class Cassette
-  attr_accessor :place, :floor_plan, :rent
+  attr_accessor :place, :floor_plan, :rent, :area
 
-  def initialize(place, floor_plan, rent)
+  def initialize(place, floor_plan, rent, area)
     @place = place
     @floor_plan = floor_plan
     @rent = rent
+    @area = area
   end
 end
 
@@ -28,20 +30,27 @@ Dir.open('./html').each do |file|
     place = item.css('.cassetteitem_detail-col1').first&.content
 
     item.css('.cassetteitem_other tbody tr').each do |row|
-      rent = row.css('td')[3].content
+      rent = row.css('td')[3].content.to_f
       floor_plan = row.css('td')[6].content
+      area = row.css('td')[7].content.to_f
 
-      cassettes << Cassette.new(place, floor_plan, rent)
+      cassettes << Cassette.new(place, floor_plan, rent, area)
     end
   end
 end
 
-puts '{'
+results = { }
 
-puts cassettes.map { |cassette|
-  "{ place: \"#{cassette.place}\", floor_plan: \"#{cassette.floor_plan}\", rent: \"#{cassette.rent}\" }"
-}.join(",\n")
+cassettes.each do |cassette|
+  results[cassette.place] = [] unless results[cassette.place]
+  results[cassette.place] << {
+    place: cassette.place,
+    plan: cassette.floor_plan,
+    rent: cassette.rent,
+    area: cassette.area
+  }
+end
 
-puts '}'
+pp results.to_json
 
 STDERR.puts "Output #{cassettes.size} datasets"
