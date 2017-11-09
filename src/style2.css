@@ -20,7 +20,7 @@ input[type=radio]:checked + label {
 }
 
 label + input[type=radio] + label {
-  border-left: solid 3px #675f6b;
+  border-left: solid 0px #675f6b;
 }
 
 .radio-group {
