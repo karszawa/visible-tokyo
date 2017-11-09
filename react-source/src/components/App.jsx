@@ -7,7 +7,21 @@ import { SearchInput, ControlButtonWrapper, ControlButton } from './App.componen
 import { MAP_TYPE_RENT, MAP_TYPE_ACCESS } from '../constants';
 
 const GeoJSON = require('json-loader!../../data/tokyo.geojson');
-const Suumo = require('json-loader!../../data/suumo.json');
+const Suumo = JSON.parse(require('json-loader!../../data/suumo.json'));
+
+function sum(arr, fn) {
+  if (fn) {
+    return sum(arr.map(fn));
+  }
+
+  return arr.reduce(function(prev, current, i, arr) {
+    return prev + current;
+  }, 0);
+};
+
+function average(arr, fn) {
+  return sum(arr, fn) / arr.length;
+};
 
 class CustomSearchBox extends React.Component {
   onPlacesChanged() {
@@ -83,9 +97,20 @@ const RentSelectBox = (props) => {
 };
 
 class RentMap extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      targets: [ 15, 20 ]
+    };
+  }
+
   render() {
     const polygons = GeoJSON.features.map((feature, i) => {
       const paths = feature.geometry.coordinates[0].map(ary => { return { lat: ary[1], lng: ary[0] } });
+      const avg = this.getPriceFromFeature(feature);
+      const color = (avg - 5) * 25;
+      console.log(avg);
 
       return (
         <Polygon
@@ -95,8 +120,8 @@ class RentMap extends React.Component {
             strokeColor: '#000000',
             strokeOpacity: 0,
             strokeWeight: 0,
-            fillColor: '#FF0000',
-            fillOpacity: 0.35
+            fillColor: `rgb(${color}, 0, 0)`,
+            fillOpacity: isNaN(avg) ? 0 : 0.35
           }}
         />
       );
@@ -105,6 +130,19 @@ class RentMap extends React.Component {
     return [
       polygons
     ];
+  }
+
+  getPriceFromFeature(feature) {
+    const place = [
+      feature.properties.KEN_NAME,
+      feature.properties.GST_NAME,
+      feature.properties.MOJI
+    ].join('').replace(/丁目$/, '');
+    const filtered = (Suumo[place] || []).filter(obj =>
+      this.state.targets.some(lowerBound => lowerBound <= obj.area && obj.area <= lowerBound + 5)
+    );
+
+    return average(filtered.map(obj => obj.rent));
   }
 }
 
@@ -133,33 +171,9 @@ class App extends React.Component {
   componentDidMount() {
   }
 
-  handleMarkerClick() {
-    this.setState({ isMarkerShown: false })
-    this.delayedShowMarker()
-  }
-
-  renderPolygons(props) {
-    return GeoJSON.features.map((feature, i) => {
-      const paths = feature.geometry.coordinates[0].map(ary => { return { lat: ary[1], lng: ary[0] } });
-
-      return (
-        <Polygon
-          key={feature.properties.H27KA13_ID}
-          paths={paths}
-          options={{
-            strokeColor: '#000000',
-            strokeOpacity: 0,
-            strokeWeight: 0,
-            fillColor: '#FF0000',
-            fillOpacity: 0.35
-          }}
-        />
-      );
-    });
-  }
-
   onPlacesChanged(place) {
     this.googleMap.panTo(place);
+    this.googleMap.setZoom(14);
     this.setState({ destination: place });
   }
 
@@ -204,7 +218,7 @@ class App extends React.Component {
 const properties = withProps({
   googleMapURL: "https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=geometry,drawing,places&key=AIzaSyDEG16WeMaOoAtxtKMfp0YUEM2S2CTksh0",
   loadingElement: <div style={{ height: `100%` }} />,
-  containerElement: <div style={{ height: `800px` }} />,
+  containerElement: <div style={{ height: `400px` }} />,
   mapElement: <div style={{ height: `100%` }} />,
 });
 
