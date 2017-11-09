@@ -20,7 +20,7 @@ html, body, #map {
   position: absolute;
   width: 160px;
   height: 350px;
-  background-color: rgba(255, 255, 255, 0.85);
+  background-color: rgba(255, 255, 255, 0);
   top: 90px;
   bottom: 40px;
   left: 10px;
@@ -93,18 +93,26 @@ html, body, #map {
 </style>
 <body>
 <div id="map"></div>
-<div id="line_check"></div>
+<div id="line_check" ></div>
 <div class="radio-group">
-<input type="radio" id="option-one" name="selector"><label for="option-one">RENT</label><input type="radio" id="option-two" name="selector"><label for="option-two">ACCESS</label>
+<input type="radio" id="option-one" name="selector" onclick="show_rent()"><label for="option-one">RENT</label>
+<input type="radio" id="option-two" name="selector" onclick="show_access()"><label for="option-two">ACCESS</label>
 </div>
 <input id="pac-input" class="controls" type="text" placeholder="Search Box">
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDEG16WeMaOoAtxtKMfp0YUEM2S2CTksh0&libraries=places"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDEG16WeMaOoAtxtKMfp0YUEM2S2CTksh0&libraries=places&sensor=true"></script>
 <script src="./d3CheckBox.js"></script>
 <script src="https://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+
+
 <script>
+
+var element1 = document.getElementById("option-one");
+var element2 = document.getElementById("option-two");
 
 const width = 960;
 const height = 700;
+
 
 // Create the Google Map…
 const map = new google.maps.Map(d3.select("#map").node(), {
@@ -113,7 +121,119 @@ const map = new google.maps.Map(d3.select("#map").node(), {
   mapTypeId: google.maps.MapTypeId.TERRAIN
 });
 
-// Load the station data. When the data comes back, create an overlay.
+// This example adds a search box to a map, using the Google Place Autocomplete
+// feature. People can enter geographical searches. The search box will return a
+// pick list containing a mix of places and predicted search terms.
+// This example requires the Places library. Include the libraries=places
+// parameter when you first load the API. For example:
+// <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places">
+function initAutocomplete() {
+  // Create the search box and link it to the UI element.
+  var input = document.getElementById('pac-input');
+  var searchBox = new google.maps.places.SearchBox(input);
+  map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+  // Bias the SearchBox results towards current map's viewport.
+  map.addListener('bounds_changed', function() {
+    searchBox.setBounds(map.getBounds());
+  });
+  var markers = [];
+  // Listen for the event fired when the user selects a prediction and retrieve
+  // more details for that place.
+  searchBox.addListener('places_changed', function() {
+    var places = searchBox.getPlaces();
+    if (places.length == 0) {
+      return;
+    }
+    // Clear out the old markers.
+    markers.forEach(function(marker) {
+      marker.setMap(null);
+    });
+    markers = [];
+    // For each place, get the icon, name and location.
+    var bounds = new google.maps.LatLngBounds();
+    places.forEach(function(place) {
+      if (!place.geometry) {
+        console.log("Returned place contains no geometry");
+        return;
+      }
+      var icon = {
+        url: place.icon,
+        size: new google.maps.Size(71, 71),
+        origin: new google.maps.Point(0, 0),
+        anchor: new google.maps.Point(17, 34),
+        scaledSize: new google.maps.Size(25, 25)
+      };
+      // Create a marker for each place.
+      markers.push(new google.maps.Marker({
+        map: map,
+        icon: icon,
+        title: place.name,
+        position: place.geometry.location
+      }));
+      if (place.geometry.viewport) {
+        // Only geocodes have viewport.
+        bounds.union(place.geometry.viewport);
+      }
+      else {
+        bounds.extend(place.geometry.location);
+      }
+    });
+    map.fitBounds(bounds);
+  });
+}
+
+//create button to switch tab
+  var svg = d3.select("#switch_tab").append("svg");
+  
+
+function show_rent() {
+  const map = new google.maps.Map(d3.select("#map").node(), {
+  zoom: 12,
+  center: new google.maps.LatLng(35.681167, 139.767052),
+  mapTypeId: google.maps.MapTypeId.TERRAIN
+});
+  d3.json("./tokyo.topojson", (data) => {
+  geoJsonObject = topojson.feature(data, data.objects.tokyo)
+  map.data.addGeoJson(geoJsonObject);
+
+  map.data.setStyle((feature) => {
+    //console.log(`${feature.f.MOJI} ${feature.f.SETAI} ${feature.f.AREA / feature.f.SETAI}`);
+
+    if (feature.getProperty('type') === 'point') {
+      // マーカーの処理は関数を使って処理
+      return {
+        icon: getMarkerColor(feature.getProperty('color')),
+      };
+    } else if (feature.getProperty('type') === 'polyline') {
+      // ポリラインの処理
+      return {
+        strokeColor: 'green', // feature.getProperty('color'),
+        strokeWeight: 20,
+        clickable: true,
+        zIndex: 1
+      };
+    } else {
+      // ポリゴンの処理
+      return {
+        fillColor: `rgb(${feature.f.SETAI / 3000 * 255}, 0, 0)`, //feature.getProperty('color'),
+        fillOpacity: 0.5,
+        strokeWeight: 0,
+        clickable: true,
+        zIndex: 1
+      };
+    }
+  });
+});
+}
+
+function show_access() {
+const map = new google.maps.Map(d3.select("#map").node(), {
+  zoom: 12,
+  center: new google.maps.LatLng(35.681167, 139.767052),
+  mapTypeId: google.maps.MapTypeId.TERRAIN
+});
+
+  // Load the station data. When the data comes back, create an overlay.
 d3.json("all_stations.json", (error, data) => {
 
   if (error) throw error;
@@ -144,8 +264,7 @@ d3.json("all_stations.json", (error, data) => {
     {name:'京王井の頭線', color:'#555555'},
   ];
 
-  //create button to switch tab
-  var svg = d3.select("#switch_tab").append("svg");
+  
 
   // create area to select lines
   var svg = d3.select("#line_check").append("svg").attr("width", 160).attr("height", 350);
@@ -236,65 +355,6 @@ d3.json("all_stations.json", (error, data) => {
   initAutocomplete();
 });
 
-// This example adds a search box to a map, using the Google Place Autocomplete
-// feature. People can enter geographical searches. The search box will return a
-// pick list containing a mix of places and predicted search terms.
-// This example requires the Places library. Include the libraries=places
-// parameter when you first load the API. For example:
-// <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places">
-function initAutocomplete() {
-  // Create the search box and link it to the UI element.
-  var input = document.getElementById('pac-input');
-  var searchBox = new google.maps.places.SearchBox(input);
-  map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
-  // Bias the SearchBox results towards current map's viewport.
-  map.addListener('bounds_changed', function() {
-    searchBox.setBounds(map.getBounds());
-  });
-  var markers = [];
-  // Listen for the event fired when the user selects a prediction and retrieve
-  // more details for that place.
-  searchBox.addListener('places_changed', function() {
-    var places = searchBox.getPlaces();
-    if (places.length == 0) {
-      return;
-    }
-    // Clear out the old markers.
-    markers.forEach(function(marker) {
-      marker.setMap(null);
-    });
-    markers = [];
-    // For each place, get the icon, name and location.
-    var bounds = new google.maps.LatLngBounds();
-    places.forEach(function(place) {
-      if (!place.geometry) {
-        console.log("Returned place contains no geometry");
-        return;
-      }
-      var icon = {
-        url: place.icon,
-        size: new google.maps.Size(71, 71),
-        origin: new google.maps.Point(0, 0),
-        anchor: new google.maps.Point(17, 34),
-        scaledSize: new google.maps.Size(25, 25)
-      };
-      // Create a marker for each place.
-      markers.push(new google.maps.Marker({
-        map: map,
-        icon: icon,
-        title: place.name,
-        position: place.geometry.location
-      }));
-      if (place.geometry.viewport) {
-        // Only geocodes have viewport.
-        bounds.union(place.geometry.viewport);
-      }
-      else {
-        bounds.extend(place.geometry.location);
-      }
-    });
-    map.fitBounds(bounds);
-  });
 }
 
 </script>
