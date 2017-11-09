@@ -33,7 +33,9 @@ html, body, #map {
 <script src="./topojson.v1.min.js"></script>
 <script>
 
-target_plans = [ '1K', 'ワンルーム', '1DK' ]
+// target_plans = [ '1K', 'ワンルーム', '1DK' ]
+target_area_index = 0
+target_areas = [ 15, 20, 25, 30, 35, 40, 45, 50 ]
 
 var sum = function(arr, fn) {
     if (fn) {
@@ -71,8 +73,8 @@ document.addEventListener("DOMContentLoaded", (event) => {
   function getPrice(feature) {
     const moji = (feature.f.MOJI || "");
     const place = '東京都' + feature.f.GST_NAME + moji.slice(0, moji.endsWith('丁目') ? -2 : moji.length);
-    const filtered = (suumo[place] || []).filter((obj) => target_plans.includes(obj.plan));
-    const avg = average(filtered, obj => obj.rent_mean);
+    const filtered = (suumo[place] || []).filter(obj => target_areas[target_area_index] <= obj.area && obj.area <= target_areas[target_area_index] + 5);
+    const avg = average(filtered, obj => obj.rent);
 
     return avg;
   }

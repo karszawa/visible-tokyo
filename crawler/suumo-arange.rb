@@ -26,33 +26,14 @@ end
 
 json = JSON.parse(File.open(ARGV[0]).read)
 
-hash = {}
-result = {}
+results = {}
 
 json["data"].each do |obj|
-  hash[obj["place"]] = {} unless hash[obj["place"]]
-  hash[obj["place"]][obj["floor_plan"]] = [] unless hash[obj["place"]][obj["floor_plan"]]
-  hash[obj["place"]][obj["floor_plan"]] << obj["rent"]
-end
+  place = obj["place"]
 
-hash.each do |place, plans|
-  plans.each do |plan, rents|
-    rents = rents.map(&:to_f)
+  results[place] = {} unless results[place]
 
-    result[place] = [] unless result[place]
-
-    result[place] << {
-      place: place,
-      plan: plan,
-      sample_size: rents.size,
-      rent_mean: rents.mean.round(1),
-      rent_max: rents.max.round(1),
-      rent_min: rents.min.round(1)
-      # rent_var: rents.var.round(1),
-      # rent_sd: rents.sd.round(1),
-      # rent_med: rents.med.round(1)
-    }
-  end
+  results[place] << obj
 end
 
 pp result.to_json
