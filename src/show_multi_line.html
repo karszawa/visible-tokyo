@@ -126,13 +126,6 @@ const height = 700;
 
 checked = {};
 
-// Create the Google Map…
-const map = new google.maps.Map(d3.select("#map").node(), {
-  zoom: 12,
-  center: new google.maps.LatLng(35.681167, 139.767052),
-  mapTypeId: google.maps.MapTypeId.TERRAIN
-});
-
 // This example adds a search box to a map, using the Google Place Autocomplete
 // feature. People can enter geographical searches. The search box will return a
 // pick list containing a mix of places and predicted search terms.
@@ -194,6 +187,14 @@ function initAutocomplete() {
   });
 } 
 
+// Create the Google Map…
+const map = new google.maps.Map(d3.select("#map").node(), {
+  zoom: 12,
+  center: new google.maps.LatLng(35.681167, 139.767052),
+  mapTypeId: google.maps.MapTypeId.TERRAIN
+});
+
+
 
 function show_rent() {
   const map = new google.maps.Map(d3.select("#map").node(), {
@@ -231,17 +232,18 @@ function show_rent() {
         zIndex: 1
       };
     }
+    initAutocomplete();
   });
 });
 }
 
 function show_access() {
+
 const map = new google.maps.Map(d3.select("#map").node(), {
   zoom: 12,
   center: new google.maps.LatLng(35.681167, 139.767052),
   mapTypeId: google.maps.MapTypeId.TERRAIN
 });
-
   // Load the station data. When the data comes back, create an overlay.
 d3.json("all_stations.json", (error, data) => {
 
@@ -356,7 +358,7 @@ d3.json("all_stations.json", (error, data) => {
 
   // Bind our overlay to the map…
   overlay.setMap(map);
-  initAutocomplete();
+  //initAutocomplete();
 });
 
 }
