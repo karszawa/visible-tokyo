@@ -17,6 +17,7 @@
     "react-dom": "^16.0.0",
     "react-google-maps": "^9.2.2",
     "react-google-maps-loader": "^4.1.0",
+    "react-materialize": "^1.0.17",
     "styled-components": "^2.2.3",
     "webpack": "^3.8.1",
     "webpack-dev-server": "^2.9.4"

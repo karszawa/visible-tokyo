@@ -42,4 +42,26 @@ const ControlButton = styled.div`
   }
 `;
 
-export { SearchInput, ControlButtonWrapper, ControlButton };
+const SelectBoxWrapper = styled.div`
+  position: absolute;
+  top: 90px;
+  left: 10px;
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  background-color: white;
+  border-radius: 2px;
+  background-clip: padding-box;
+  box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px;
+`;
+
+const SelectBoxColumn = styled.div`
+  display: flex;
+  align-items: center;
+
+  :not(:last-child) {
+    margin-bottom: 10px;
+  }
+`;
+
+export { SearchInput, ControlButtonWrapper, ControlButton, SelectBoxWrapper, SelectBoxColumn };

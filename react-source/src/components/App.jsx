@@ -3,7 +3,8 @@ import { compose, withProps } from 'recompose';
 import { withScriptjs, withGoogleMap, GoogleMap, Marker, Polygon, InfoWindow } from 'react-google-maps';
 import { SearchBox } from 'react-google-maps/lib/components/places/SearchBox';
 import GoogleMapLoader from 'react-google-maps-loader';
-import { SearchInput, ControlButtonWrapper, ControlButton } from './App.components';
+import { Input } from 'react-materialize';
+import { SearchInput, ControlButtonWrapper, ControlButton, SelectBoxWrapper, SelectBoxColumn } from './App.components';
 import { MAP_TYPE_RENT, MAP_TYPE_ACCESS } from '../constants';
 
 const GeoJSON = require('json-loader!../../data/tokyo.geojson');
@@ -74,9 +75,51 @@ class ControlBox extends React.Component {
   }
 }
 
-class SelectBox extends React.PureComponent {
-  render() {
+class SelectBox extends React.Component {
+  constructor(props) {
+    super(props);
 
+    console.log("SelectBox Contructor");
+    this.state = {
+      checked: [ 15, 20 ]
+    };
+  }
+
+  onChange(keyword) {
+    let checked = [];
+
+    if (this.state.checked.some(v => v == keyword)) {
+      checked = this.state.checked;
+      this.state.checked.some((v, i) => { if (v == keyword) checked.splice(i, 1); });
+      this.setState({ checked: checked });
+    } else {
+      checked = this.state.checked.concat(keyword);
+      this.setState({ checked: checked });
+    }
+
+    this.props.onSelect(checked);
+  }
+
+  render() {
+    const columns = this.props.keywords.map((keyword, i) => {
+      return (
+        <SelectBoxColumn key={ keyword }>
+          <input
+            type="checkbox"
+            id={`${keyword}`}
+            onChange={ this.onChange.bind(this, keyword) }
+            checked={ this.state.checked.some(v => v == keyword) }
+          />
+          <label htmlFor={`${keyword}`}>{ this.props.names[i] }</label>
+        </SelectBoxColumn>
+      );
+    });
+
+    return (
+      <SelectBoxWrapper>
+        { columns }
+      </SelectBoxWrapper>
+    );
   }
 }
 
@@ -90,11 +133,13 @@ const RentSelectBox = (props) => {
   return (
     <SelectBox
       names={ numbers.map(i => `${10+5*(i+1)}~${10+5*(i+2)}㎡`) }
-      keywords={ numbers.map(i => 10 + 5 * i) }
+      keywords={ numbers.map(i => 10 + 5 * (i + 1)) }
       onSelect={ props.onSelect }
     />
   );
 };
+
+let renderedComponents = {};
 
 class RentMap extends React.Component {
   constructor(props) {
@@ -109,7 +154,39 @@ class RentMap extends React.Component {
   render() {
     console.log(this.state);
 
-    const polygons = GeoJSON.features.map((feature, i) => {
+    const infoWindow = ( this.state.target &&
+      <InfoWindow
+        key={this.state.target.key}
+        position={ this.state.target.position }
+        onCloseClick={ () => this.setState({ target: null }) }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <span>{ this.state.target.location }</span>
+          <span>{ Math.floor(this.state.target.rent * 10) / 10 }万円</span>
+        </div>
+      </InfoWindow>
+    );
+
+    return [
+      this.renderPolygons(),
+      infoWindow,
+      <RentSelectBox
+        selected={ this.state.targets }
+        key="rent-select-box"
+        onSelect={ targets => this.setState({ targets: targets }) }
+      />
+    ];
+  }
+
+  renderPolygons() {
+    console.log('Try to render polygons.');
+    if (renderedComponents[this.state.targets]) {
+      console.log('Use memo.');
+      return renderedComponents[this.state.targets];
+    }
+    console.log('Render polygons.');
+
+    renderedComponents[this.state.targets] = GeoJSON.features.map((feature, i) => {
       const paths = feature.geometry.coordinates[0].map(ary => { return { lat: ary[1], lng: ary[0] } });
       const avg = this.getPriceFromFeature(feature);
       const color = (avg - 5) * 25;
@@ -136,23 +213,7 @@ class RentMap extends React.Component {
       );
     });
 
-    const infoWindow = ( this.state.target &&
-      <InfoWindow
-        key={this.state.target.key}
-        position={ this.state.target.position }
-        onCloseClick={ () => this.setState({ target: null }) }
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <span>{ this.state.target.location }</span>
-          <span>{ Math.floor(this.state.target.rent * 10) / 10 }万円</span>
-        </div>
-      </InfoWindow>
-    );
-
-    return [
-      polygons,
-      infoWindow
-    ];
+    return renderedComponents[this.state.targets];
   }
 
   getLocationFromFeature(feature) {
