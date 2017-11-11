@@ -1,6 +1,6 @@
 import React from 'react';
 import { compose, withProps } from 'recompose';
-import { withScriptjs, withGoogleMap, GoogleMap, Marker, Polygon, InfoWindow } from 'react-google-maps';
+import { withScriptjs, withGoogleMap, GoogleMap, Marker, Polygon, Circle, InfoWindow } from 'react-google-maps';
 import { SearchBox } from 'react-google-maps/lib/components/places/SearchBox';
 import GoogleMapLoader from 'react-google-maps-loader';
 import { Input } from 'react-materialize';
@@ -9,6 +9,7 @@ import { MAP_TYPE_RENT, MAP_TYPE_ACCESS } from '../constants';
 
 const GeoJSON = require('json-loader!../../data/tokyo.geojson');
 const Suumo = JSON.parse(require('json-loader!../../data/suumo.json'));
+const Stations = require('json-loader!../../data/all_stations.json');
 
 function sum(arr, fn) {
   if (fn) {
@@ -76,12 +77,12 @@ class ControlBox extends React.Component {
 }
 
 class SelectBox extends React.Component {
-  constructor(props) {
+  constructor(props, state) {
     super(props);
 
     console.log("SelectBox Contructor");
     this.state = {
-      checked: [ 15, 20 ]
+      checked: [ 15, 20, 'JR山手線' ]
     };
   }
 
@@ -124,7 +125,21 @@ class SelectBox extends React.Component {
 }
 
 const AccessSelectBox = (props) => {
+  const lines = [
+    'JR山手線', 'JR中央線(快速)', 'JR中央・総武線', '東京メトロ銀座線',
+    '東京メトロ丸ノ内線', '東京メトロ日比谷線', '東京メトロ東西線',
+    '東京メトロ千代田線', '東京メトロ有楽町線', '東京メトロ半蔵門線',
+    '東京メトロ南北線', '東京メトロ副都心線', '都営大江戸線',
+    '都営浅草線', '都営三田線', '都営新宿線', '京王井の頭線'
+  ];
 
+  return (
+    <SelectBox
+      names={ lines }
+      keywords={ lines }
+      onSelect={ props.onSelect }
+    />
+  );
 };
 
 const RentSelectBox = (props) => {
@@ -139,7 +154,65 @@ const RentSelectBox = (props) => {
   );
 };
 
-let renderedComponents = {};
+let renderedStations = {};
+
+class AccessMap extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      targets: [ 'JR山手線' ]
+    }
+  }
+
+  renderStations() {
+    if (renderedStations[this.state.targets]) {
+      return renderedStations[this.state.targets];
+    }
+
+    renderedStations[this.state.targets] = Stations.map((station) => {
+      if (!this.state.targets.some(target => target === station.line)) {
+        return;
+      }
+
+      return [
+        this.renderCircle(station, 600),
+        this.renderCircle(station, 300),
+        this.renderCircle(station, 100),
+      ];
+    });
+
+    return renderedStations[this.state.targets];
+  }
+
+  renderCircle(station, radius) {
+    return (
+      <Circle
+        key={ station.name + radius }
+        radius={ radius }
+        center={{ lat: station.lat, lng: station.lng }}
+        options={{
+          fillColor: `rgb(${255 - radius / 6}, 0, 0)`,
+          opacity: .35,
+          strokeColor: 'white',
+          strokeWeight: .5
+        }}
+      />
+    );
+  }
+
+  render() {
+    return [
+      this.renderStations(),
+      <AccessSelectBox
+        key="access-select-box"
+        onSelect={ targets => this.setState({ targets: targets }) }
+      />
+    ];
+  }
+}
+
+let renderedPolygons = {};
 
 class RentMap extends React.Component {
   constructor(props) {
@@ -180,13 +253,13 @@ class RentMap extends React.Component {
 
   renderPolygons() {
     console.log('Try to render polygons.');
-    if (renderedComponents[this.state.targets]) {
+    if (renderedPolygons[this.state.targets]) {
       console.log('Use memo.');
-      return renderedComponents[this.state.targets];
+      return renderedPolygons[this.state.targets];
     }
     console.log('Render polygons.');
 
-    renderedComponents[this.state.targets] = GeoJSON.features.map((feature, i) => {
+    renderedPolygons[this.state.targets] = GeoJSON.features.map((feature, i) => {
       const paths = feature.geometry.coordinates[0].map(ary => { return { lat: ary[1], lng: ary[0] } });
       const avg = this.getPriceFromFeature(feature);
       const color = (avg - 5) * 25;
@@ -213,7 +286,7 @@ class RentMap extends React.Component {
       );
     });
 
-    return renderedComponents[this.state.targets];
+    return renderedPolygons[this.state.targets];
   }
 
   getLocationFromFeature(feature) {
@@ -231,12 +304,6 @@ class RentMap extends React.Component {
     );
 
     return average(filtered.map(obj => obj.rent));
-  }
-}
-
-class AccessMap extends React.Component {
-  render() {
-    return null;
   }
 }
 
