@@ -99,4 +99,19 @@ const LegendWrapper = styled.div`
   border-radius: 2px;
 `;
 
-export { SearchInput, ControlButtonWrapper, ControlButton, SelectBoxWrapper, SelectBoxColumn, ShadowBox, LineBadge, LegendWrapper };
+const InformationContainer = styled.div`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 300px;
+  padding: 20px;
+  background-color: white;
+`;
+
+const InformationTitle = styled.div`
+  font-size: 15px;
+  font-weight: bold;
+  margin-bottom: 20px;
+`;
+
+export { SearchInput, ControlButtonWrapper, ControlButton, SelectBoxWrapper, SelectBoxColumn, ShadowBox, LineBadge, LegendWrapper, InformationContainer, InformationTitle };

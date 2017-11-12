@@ -4,8 +4,9 @@ import { withScriptjs, withGoogleMap, GoogleMap, Marker, Polygon, Circle, InfoWi
 import { SearchBox } from 'react-google-maps/lib/components/places/SearchBox';
 import GoogleMapLoader from 'react-google-maps-loader';
 import { Input } from 'react-materialize';
-import { SearchInput, ControlButtonWrapper, ControlButton, SelectBoxWrapper, SelectBoxColumn, LineBadge, ShadowBox, LegendWrapper } from './App.components';
+import { SearchInput, ControlButtonWrapper, ControlButton, SelectBoxWrapper, SelectBoxColumn, LineBadge, ShadowBox, LegendWrapper, InformationContainer, InformationTitle } from './App.components';
 import { MAP_TYPE_RENT, MAP_TYPE_ACCESS } from '../constants';
+import ApiService from './api-service';
 
 import SuumoLegend from 'react-svg-loader!./suumo-legend.svg';
 
@@ -391,6 +392,63 @@ class AltitudeMap extends React.Component {
   }
 }
 
+const apiService = new ApiService();
+
+class InformationPanel extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      formattedAddress: "",
+      duration: ""
+    };
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.origin == this.props.origin && nextProps.destination == this.props.destination) {
+      return;
+    }
+
+    apiService.getGeocode(nextProps.origin).then(result => {
+      this.setState({ formattedAddress: result });
+
+      if (!nextProps.destination) {
+        return
+      }
+
+      var service = new google.maps.DistanceMatrixService();
+      service.getDistanceMatrix({
+        origins: [ nextProps.origin ],
+        destinations: [ nextProps.destination ],
+        travelMode: 'TRANSIT',
+        // transitOptions: TransitOptions,
+        // drivingOptions: DrivingOptions,
+        // unitSystem: UnitSystem,
+        // avoidHighways: Boolean,
+        // avoidTolls: Boolean,
+      }, (response, status) => {
+        console.log(response);
+        this.setState({ duration: response.rows[0].elements[0].duration.text });
+      });
+    });
+  }
+
+  render() {
+    console.log(this.state.formattedAddress);
+
+    if (!this.props.origin || !this.props.destination || !this.state.formattedAddress) {
+      return null;
+    }
+
+    return (
+      <InformationContainer>
+        <InformationTitle>{ this.state.formattedAddress.replace(/.+\d\d\d-\d\d\d\d /, '') }</InformationTitle>
+        <div>目的地までの距離: { this.state.duration }</div>
+      </InformationContainer>
+    );
+  }
+}
+
 class App extends React.Component {
   constructor(props) {
     super(props);
@@ -434,6 +492,19 @@ class App extends React.Component {
         />
 
         { this.state.destination && <Marker position={this.state.destination} /> }
+        { this.state.origin &&
+          <InformationPanel
+            origin={this.state.origin}
+            destination={this.state.destination}
+          />
+        }
+        { this.state.origin &&
+          <Circle
+            radius={40}
+            center={this.state.origin}
+            options={{ fillColor: 'red', fillOpacity: 0.8, strokeWeight: 0 }}
+          />
+        }
 
         <ControlBox
           names={[ 'Rent', 'Access', 'Altitude', 'Temp' ]}

@@ -19,6 +19,7 @@
     "react-google-maps-loader": "^4.1.0",
     "react-materialize": "^1.0.17",
     "styled-components": "^2.2.3",
+    "superagent": "^3.8.1",
     "webpack": "^3.8.1",
     "webpack-dev-server": "^2.9.4"
   },
