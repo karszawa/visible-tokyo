@@ -203,10 +203,14 @@ class AccessMap extends React.Component {
         return hash;
       }
 
+      if (station.name == '神田') {
+        console.log("stop");
+      }
+
       const lat = station.lat;
       const lng = station.lng;
 
-      hash[`${lat},${lng}`] = (hash[ { lat: lat, lng: lng } ] || []).concat(station.line);
+      hash[`${lat},${lng}`] = (hash[`${lat},${lng}`] || []).concat(station.line);
       return hash;
     }, {});
 
@@ -234,6 +238,20 @@ class AccessMap extends React.Component {
       );
     });
 
+    const circles = lines.map(line =>
+      <Circle
+        key={ `${position.lat}:${position.lng}:circle` }
+        radius={ 300 }
+        center={{ lat: Number(position.lat), lng: Number(position.lng) }}
+        options={{
+          fillColor: lineToColorMap[line],
+          opacity: .3,
+          strokeColor: 'white',
+          strokeWeight: .5
+        }}
+      />
+    );
+
     console.log(stations.length);
 
     return [
@@ -247,17 +265,7 @@ class AccessMap extends React.Component {
           { stations }
         </ShadowBox>
       </OverlayView>,
-      <Circle
-        key={ `${position.lat}:${position.lng}:circle` }
-        radius={ 300 }
-        center={{ lat: Number(position.lat), lng: Number(position.lng) }}
-        options={{
-          fillColor: 'black',
-          opacity: .1,
-          strokeColor: 'white',
-          strokeWeight: .1
-        }}
-      />
+      circles
     ];
   }
 
@@ -422,7 +430,7 @@ class App extends React.Component {
           keywords={[ MAP_TYPE_RENT, MAP_TYPE_ACCESS, 'altitude', 'temp' ]}
           onClick={ ::this.onClickControlBox }
         />
-        
+
         { this.renderMap() }
       </GoogleMap>
     );
