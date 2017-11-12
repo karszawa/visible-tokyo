@@ -25,6 +25,11 @@ function average(arr, fn) {
   return sum(arr, fn) / arr.length;
 };
 
+function heatMapColorforValue(value) {
+  const h = (1.0 - value) * 240
+  return `hsl(${h}, 100%, 50%)`;
+}
+
 class CustomSearchBox extends React.Component {
   onPlacesChanged() {
     const places = this.searchBox.getPlaces();
@@ -274,12 +279,12 @@ class RentMap extends React.Component {
         <Polygon
           key={ feature.properties.H27KA13_ID }
           paths={ paths }
-          onClick={ () => this.setState({ target: target }) }
+          onClick={ () => target != this.state.target && this.setState({ target: target }) }
           options={{
               strokeColor: '#000000',
               strokeOpacity: 0,
               strokeWeight: 0,
-            fillColor: `rgb(${color}, 0, 0)`,
+            fillColor: heatMapColorforValue((avg - 5) / 10), // `rgb(${color}, 0, 0)`,
             fillOpacity: isNaN(avg) ? 0 : 0.35
           }}
         />
