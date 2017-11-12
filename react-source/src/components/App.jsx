@@ -41,6 +41,24 @@ function getPixelPositionOffset(width, height) {
   };
 }
 
+function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
+  var R = 6371; // Radius of the earth in km
+  var dLat = deg2rad(lat2-lat1);  // deg2rad below
+  var dLon = deg2rad(lon2-lon1);
+  var a =
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+    Math.sin(dLon/2) * Math.sin(dLon/2)
+    ;
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  var d = R * c; // Distance in km
+  return d;
+}
+
+function deg2rad(deg) {
+  return deg * (Math.PI/180)
+}
+
 class CustomSearchBox extends React.Component {
   onPlacesChanged() {
     const places = this.searchBox.getPlaces();
@@ -218,9 +236,9 @@ class AccessMap extends React.Component {
 
     console.log(stations.length);
 
-    return (
+    return [
       <OverlayView
-        key={`${position.lat},${position.lng}`}
+        key={`${position.lat},${position.lng}:overlay`}
         position={ position }
         mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
         getPixelPositionOffset={ getPixelPositionOffset }
@@ -228,8 +246,19 @@ class AccessMap extends React.Component {
         <ShadowBox>
           { stations }
         </ShadowBox>
-      </OverlayView>
-    );
+      </OverlayView>,
+      <Circle
+        key={ `${position.lat}:${position.lng}:circle` }
+        radius={ 300 }
+        center={{ lat: Number(position.lat), lng: Number(position.lng) }}
+        options={{
+          fillColor: 'black',
+          opacity: .1,
+          strokeColor: 'white',
+          strokeWeight: .1
+        }}
+      />
+    ];
   }
 
   render() {
@@ -350,7 +379,7 @@ class App extends React.Component {
 
     this.state = {
       mapType: MAP_TYPE_ACCESS,
-      zoom: 13,
+      zoom: 14,
       destination: null,
       origin: null
     };
@@ -377,7 +406,6 @@ class App extends React.Component {
   render() {
     return (
       <GoogleMap
-        defaultZoom={13}
         defaultCenter={{ lat: 35.71215, lng: 139.7626531 }}
         ref={ e => this.googleMap = e }
         zoom={ this.state.zoom }
@@ -394,7 +422,7 @@ class App extends React.Component {
           keywords={[ MAP_TYPE_RENT, MAP_TYPE_ACCESS, 'altitude', 'temp' ]}
           onClick={ ::this.onClickControlBox }
         />
-
+        
         { this.renderMap() }
       </GoogleMap>
     );

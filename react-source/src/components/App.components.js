@@ -72,7 +72,7 @@ const ShadowBox = styled.div`
   width: 38px;
   height: 38px;
 
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: rgba(0, 0, 0, 0.0);
 `;
 
 const LineBadge = styled.div`
