@@ -64,4 +64,28 @@ const SelectBoxColumn = styled.div`
   }
 `;
 
-export { SearchInput, ControlButtonWrapper, ControlButton, SelectBoxWrapper, SelectBoxColumn };
+const ShadowBox = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  width: 38px;
+  height: 38px;
+
+  background-color: rgba(0, 0, 0, 0.3);
+`;
+
+const LineBadge = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-size: 13px;
+  background-color: ${props => props.color};
+  width: 23px;
+  height: 23px;
+  font-weight: bold;
+  border: 1px solid white;
+`;
+
+export { SearchInput, ControlButtonWrapper, ControlButton, SelectBoxWrapper, SelectBoxColumn, ShadowBox, LineBadge };

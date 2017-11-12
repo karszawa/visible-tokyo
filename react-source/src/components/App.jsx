@@ -1,15 +1,19 @@
 import React from 'react';
 import { compose, withProps } from 'recompose';
-import { withScriptjs, withGoogleMap, GoogleMap, Marker, Polygon, Circle, InfoWindow } from 'react-google-maps';
+import { withScriptjs, withGoogleMap, GoogleMap, Marker, Polygon, Circle, InfoWindow, OverlayView } from 'react-google-maps';
 import { SearchBox } from 'react-google-maps/lib/components/places/SearchBox';
 import GoogleMapLoader from 'react-google-maps-loader';
 import { Input } from 'react-materialize';
-import { SearchInput, ControlButtonWrapper, ControlButton, SelectBoxWrapper, SelectBoxColumn } from './App.components';
+import { SearchInput, ControlButtonWrapper, ControlButton, SelectBoxWrapper, SelectBoxColumn, LineBadge, ShadowBox } from './App.components';
 import { MAP_TYPE_RENT, MAP_TYPE_ACCESS } from '../constants';
 
 const GeoJSON = require('json-loader!../../data/tokyo.geojson');
 const Suumo = JSON.parse(require('json-loader!../../data/suumo.json'));
-const Stations = require('json-loader!../../data/all_stations.json');
+const Stations = require('json-loader!../../data/stations.json');
+const lineData = require('json-loader!../../data/lines.json');
+
+const lineToColorMap = lineData.reduce((hash, obj) => { hash[obj.name] = obj.color; return hash }, {});
+const lineToMarkMap = lineData.reduce((hash, obj) => { hash[obj.name] = obj.notation; return hash }, {});
 
 function sum(arr, fn) {
   if (fn) {
@@ -28,6 +32,13 @@ function average(arr, fn) {
 function heatMapColorforValue(value) {
   const h = (1.0 - value) * 240
   return `hsl(${h}, 100%, 50%)`;
+}
+
+function getPixelPositionOffset(width, height) {
+  return {
+    x: -(width / 2),
+    y: -(height / 2)
+  };
 }
 
 class CustomSearchBox extends React.Component {
@@ -130,13 +141,7 @@ class SelectBox extends React.Component {
 }
 
 const AccessSelectBox = (props) => {
-  const lines = [
-    'JR山手線', 'JR中央線(快速)', 'JR中央・総武線', '東京メトロ銀座線',
-    '東京メトロ丸ノ内線', '東京メトロ日比谷線', '東京メトロ東西線',
-    '東京メトロ千代田線', '東京メトロ有楽町線', '東京メトロ半蔵門線',
-    '東京メトロ南北線', '東京メトロ副都心線', '都営大江戸線',
-    '都営浅草線', '都営三田線', '都営新宿線', '京王井の頭線'
-  ];
+  const lines = lineData.map(line => line.name);
 
   return (
     <SelectBox
@@ -175,34 +180,55 @@ class AccessMap extends React.Component {
       return renderedStations[this.state.targets];
     }
 
-    renderedStations[this.state.targets] = Stations.map((station) => {
-      if (!this.state.targets.some(target => target === station.line)) {
-        return;
+    const pointToStations = Stations.reduce((hash, station) => {
+      if (!this.state.targets.some(name => name == station.line)) {
+        return hash;
       }
 
-      return [
-        this.renderCircle(station, 600),
-        this.renderCircle(station, 300),
-        this.renderCircle(station, 100),
-      ];
+      const lat = station.lat;
+      const lng = station.lng;
+
+      hash[`${lat},${lng}`] = (hash[ { lat: lat, lng: lng } ] || []).concat(station.line);
+      return hash;
+    }, {});
+
+    renderedStations[this.state.targets] = Object.keys(pointToStations).map(key => {
+      const lat = key.split(',')[0];
+      const lng = key.split(',')[1];
+
+      return this.renderComposedStations({ lat: lat, lng: lng }, pointToStations[key]);
     });
 
     return renderedStations[this.state.targets];
   }
 
-  renderCircle(station, radius) {
+  renderComposedStations(position, lines) {
+    const stations = lines.map(line => {
+      return (
+        <LineBadge
+          key={`${position.lat}:${position.lng}:${line}`}
+          color={lineToColorMap[line]}
+        >
+          <div>
+            { lineToMarkMap[line] || 'S' }
+          </div>
+        </LineBadge>
+      );
+    });
+
+    console.log(stations.length);
+
     return (
-      <Circle
-        key={ station.name + radius }
-        radius={ radius }
-        center={{ lat: station.lat, lng: station.lng }}
-        options={{
-          fillColor: `rgb(${255 - radius / 6}, 0, 0)`,
-          opacity: .35,
-          strokeColor: 'white',
-          strokeWeight: .5
-        }}
-      />
+      <OverlayView
+        key={`${position.lat},${position.lng}`}
+        position={ position }
+        mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+        getPixelPositionOffset={ getPixelPositionOffset }
+      >
+        <ShadowBox>
+          { stations }
+        </ShadowBox>
+      </OverlayView>
     );
   }
 
@@ -323,8 +349,8 @@ class App extends React.Component {
     super(props);
 
     this.state = {
-      mapType: MAP_TYPE_RENT,
-      zoom: 11,
+      mapType: MAP_TYPE_ACCESS,
+      zoom: 13,
       destination: null,
       origin: null
     };
@@ -351,7 +377,7 @@ class App extends React.Component {
   render() {
     return (
       <GoogleMap
-        defaultZoom={11}
+        defaultZoom={13}
         defaultCenter={{ lat: 35.71215, lng: 139.7626531 }}
         ref={ e => this.googleMap = e }
         zoom={ this.state.zoom }
