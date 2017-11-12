@@ -4,8 +4,10 @@ import { withScriptjs, withGoogleMap, GoogleMap, Marker, Polygon, Circle, InfoWi
 import { SearchBox } from 'react-google-maps/lib/components/places/SearchBox';
 import GoogleMapLoader from 'react-google-maps-loader';
 import { Input } from 'react-materialize';
-import { SearchInput, ControlButtonWrapper, ControlButton, SelectBoxWrapper, SelectBoxColumn, LineBadge, ShadowBox } from './App.components';
+import { SearchInput, ControlButtonWrapper, ControlButton, SelectBoxWrapper, SelectBoxColumn, LineBadge, ShadowBox, LegendWrapper } from './App.components';
 import { MAP_TYPE_RENT, MAP_TYPE_ACCESS } from '../constants';
+
+import SuumoLegend from 'react-svg-loader!./suumo-legend.svg';
 
 const GeoJSON = require('json-loader!../../data/tokyo.geojson');
 const Suumo = JSON.parse(require('json-loader!../../data/suumo.json'));
@@ -296,8 +298,6 @@ class RentMap extends React.Component {
   }
 
   render() {
-    console.log(this.state);
-
     const infoWindow = ( this.state.target &&
       <InfoWindow
         key={this.state.target.key}
@@ -311,9 +311,16 @@ class RentMap extends React.Component {
       </InfoWindow>
     );
 
+    const legend = (
+      <LegendWrapper key="legend-wrapper">
+        <SuumoLegend width={400} height={100} />
+      </LegendWrapper>
+    );
+
     return [
       this.renderPolygons(),
       infoWindow,
+      legend,
       <RentSelectBox
         selected={ this.state.targets }
         key="rent-select-box"

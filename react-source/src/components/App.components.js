@@ -90,4 +90,13 @@ const LineBadge = styled.div`
   border: 1px solid white;
 `;
 
-export { SearchInput, ControlButtonWrapper, ControlButton, SelectBoxWrapper, SelectBoxColumn, ShadowBox, LineBadge };
+const LegendWrapper = styled.div`
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background-color: white;
+  box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px;
+  border-radius: 2px;
+`;
+
+export { SearchInput, ControlButtonWrapper, ControlButton, SelectBoxWrapper, SelectBoxColumn, ShadowBox, LineBadge, LegendWrapper };
