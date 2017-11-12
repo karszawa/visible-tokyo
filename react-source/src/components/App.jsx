@@ -374,7 +374,7 @@ class App extends React.Component {
 const properties = withProps({
   googleMapURL: "https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=geometry,drawing,places&key=AIzaSyDEG16WeMaOoAtxtKMfp0YUEM2S2CTksh0",
   loadingElement: <div style={{ height: `100%` }} />,
-  containerElement: <div style={{ height: `400px` }} />,
+  containerElement: <div style={{ height: `800px` }} />,
   mapElement: <div style={{ height: `100%` }} />,
 });
 
