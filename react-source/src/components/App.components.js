@@ -48,7 +48,7 @@ const SelectBoxWrapper = styled.div`
   left: 10px;
   display: flex;
   flex-direction: column;
-  padding: 8px;
+  padding: 16px;
   background-color: white;
   border-radius: 2px;
   background-clip: padding-box;
@@ -58,6 +58,8 @@ const SelectBoxWrapper = styled.div`
 const SelectBoxColumn = styled.div`
   display: flex;
   align-items: center;
+  padding-bottom: 2px;
+  border-bottom: 2px solid ${props => props.borderColor || 'rgba(0, 0, 0, 0)' };
 
   :not(:last-child) {
     margin-bottom: 10px;

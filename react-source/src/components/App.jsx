@@ -144,9 +144,13 @@ class SelectBox extends React.Component {
             id={`${keyword}`}
             onChange={ this.onChange.bind(this, keyword) }
             checked={ this.state.checked.some(v => v == keyword) }
+            style={{ marginRight: '10px' }}
           />
-          <label htmlFor={`${keyword}`}>{ this.props.names[i] }</label>
-        </SelectBoxColumn>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '200px' }}>
+            <label htmlFor={`${keyword}`}>{ this.props.names[i] }</label>
+            { this.props.notations && <div style={{ backgroundColor: lineToColorMap[keyword], width: '20px', height: '20px', borderRadius: '5px', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white', fontSize: '11px' }}>{ this.props.notations[i] }</div>}
+            </div>
+            </SelectBoxColumn>
       );
     });
 
@@ -160,11 +164,14 @@ class SelectBox extends React.Component {
 
 const AccessSelectBox = (props) => {
   const lines = lineData.map(line => line.name);
+  const keywords = lineData.map(line => line.name);
+  const notations = lineData.map(line => line.notation);
 
   return (
     <SelectBox
       names={ lines }
-      keywords={ lines }
+      keywords={ keywords }
+      notations={ notations }
       onSelect={ props.onSelect }
     />
   );
@@ -190,7 +197,7 @@ class AccessMap extends React.Component {
 
     this.state = {
       targets: [ 'JR山手線' ]
-    }
+    };
   }
 
   renderStations() {
@@ -201,10 +208,6 @@ class AccessMap extends React.Component {
     const pointToStations = Stations.reduce((hash, station) => {
       if (!this.state.targets.some(name => name == station.line)) {
         return hash;
-      }
-
-      if (station.name == '神田') {
-        console.log("stop");
       }
 
       const lat = station.lat;
