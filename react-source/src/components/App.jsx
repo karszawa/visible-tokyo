@@ -324,8 +324,9 @@ class App extends React.Component {
 
     this.state = {
       mapType: MAP_TYPE_RENT,
+      zoom: 11,
       destination: null,
-      zoom: 11
+      origin: null
     };
   }
 
@@ -335,6 +336,11 @@ class App extends React.Component {
   onPlacesChanged(place) {
     this.googleMap.panTo(place);
     this.setState({ destination: place, zoom: 15 });
+  }
+
+  onChangeOrigin(place) {
+    this.setState({ origin: { lat: place.latLng.lat(), lng: place.latLng.lng() } });
+    console.log(place);
   }
 
   onClickControlBox(mapType) {
@@ -349,6 +355,7 @@ class App extends React.Component {
         defaultCenter={{ lat: 35.71215, lng: 139.7626531 }}
         ref={ e => this.googleMap = e }
         zoom={ this.state.zoom }
+        onClick={ ::this.onChangeOrigin }
       >
         <CustomSearchBox
           onPlacesChanged={ ::this.onPlacesChanged }
