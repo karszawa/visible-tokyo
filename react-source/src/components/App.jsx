@@ -203,6 +203,11 @@ class AccessMap extends React.Component {
     };
   }
 
+  componentWillReceiveProps(nextProps) {
+    // this.setState({ targets: this.state.targets.concat(nextProps.targets).filter((x, i, self) => self.indexOf(x) === i) });
+    this.setState({ targets: nextProps.targets });
+  }
+
   renderStations() {
     if (renderedStations[this.state.targets]) {
       return renderedStations[this.state.targets];
@@ -246,19 +251,19 @@ class AccessMap extends React.Component {
 
     const circles = lines.map(line =>
       <Circle
-        key={ `${position.lat}:${position.lng}:circle` }
+        key={ `${position.lat}:${position.lng}:${line}:circle` }
         radius={ 300 }
         center={{ lat: Number(position.lat), lng: Number(position.lng) }}
+        clickable={false}
         options={{
           fillColor: lineToColorMap[line],
           opacity: .3,
           strokeColor: 'white',
-          strokeWeight: .5
+          strokeWeight: .5,
+          clickable: false
         }}
       />
     );
-
-    console.log(stations.length);
 
     return [
       <OverlayView
@@ -325,7 +330,7 @@ class RentMap extends React.Component {
       <RentSelectBox
         selected={ this.state.targets }
         key="rent-select-box"
-        onSelect={ targets => this.setState({ targets: targets }) }
+        onSelect={ targets => this.setState({ targets: targets, target: null }) }
       />
     ];
   }
@@ -428,7 +433,9 @@ class InformationPanel extends React.Component {
         // avoidTolls: Boolean,
       }, (response, status) => {
         console.log(response);
-        this.setState({ duration: response.rows[0].elements[0].duration.text });
+        if (response.rows[0].elements[0].duration) {
+          this.setState({ duration: response.rows[0].elements[0].duration.text });
+        }
       });
     });
   }
@@ -440,10 +447,21 @@ class InformationPanel extends React.Component {
       return null;
     }
 
+    const lines = Stations.filter(station =>
+      getDistanceFromLatLonInKm(station.lat, station.lng, this.props.origin.lat, this.props.origin.lng) <= 0.3
+    ).map(station => station.line).filter((x, i, self) =>
+      self.indexOf(x) === i).map((line, i) =>
+      <li key={i}>・{ line }</li>
+    );
+
     return (
       <InformationContainer>
         <InformationTitle>{ this.state.formattedAddress.replace(/.+\d\d\d-\d\d\d\d /, '') }</InformationTitle>
         <div>目的地までの距離: { this.state.duration }</div>
+        <div style={{ marginBttom: '20px', marginTop: '20px' }}>300m以内の駅</div>
+        <ul>
+          { lines || 'なし' }
+        </ul>
       </InformationContainer>
     );
   }
@@ -457,7 +475,8 @@ class App extends React.Component {
       mapType: MAP_TYPE_ACCESS,
       zoom: 14,
       destination: null,
-      origin: null
+      origin: null,
+      nearLines: []
     };
   }
 
@@ -472,6 +491,19 @@ class App extends React.Component {
   onChangeOrigin(place) {
     this.setState({ origin: { lat: place.latLng.lat(), lng: place.latLng.lng() } });
     console.log(place);
+    this.updateAccess({ lat: place.latLng.lat(), lng: place.latLng.lng() });
+  }
+
+  updateAccess(origin) {
+    const lines = Stations.filter(station =>
+      getDistanceFromLatLonInKm(station.lat, station.lng, origin.lat, origin.lng) <= 1
+    ).map(station => station.line).filter((x, i, self) =>
+      self.indexOf(x) === i
+    ).map((line, i) =>
+      line
+    );
+
+    this.setState({ nearLines: lines });
   }
 
   onClickControlBox(mapType) {
@@ -498,13 +530,20 @@ class App extends React.Component {
             destination={this.state.destination}
           />
         }
-        { this.state.origin &&
+        { this.state.origin && [
           <Circle
-            radius={40}
+            key={"origin-circle-100"}
+            radius={100}
+            center={this.state.origin}
+            options={{ fillColor: 'red', fillOpacity: 0.3, strokeWeight: 0.5, strokeColor: 'white', strokeOpacity: 0.5 }}
+          />,
+          <Circle
+            key={"origin-circle-20"}
+            radius={20}
             center={this.state.origin}
             options={{ fillColor: 'red', fillOpacity: 0.8, strokeWeight: 0 }}
           />
-        }
+        ]}
 
         <ControlBox
           names={[ 'Rent', 'Access', 'Altitude', 'Temp' ]}
@@ -520,7 +559,7 @@ class App extends React.Component {
   renderMap() {
     switch (this.state.mapType) {
       case MAP_TYPE_RENT:   return <RentMap />;
-      case MAP_TYPE_ACCESS: return <AccessMap />;
+      case MAP_TYPE_ACCESS: return <AccessMap targets={ this.state.nearLines } />;
       default: return <AltitudeMap />;
     }
   }
