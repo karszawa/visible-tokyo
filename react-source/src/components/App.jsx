@@ -8,7 +8,7 @@ import { SearchInput, ControlButtonWrapper, ControlButton, SelectBoxWrapper, Sel
 import { MAP_TYPE_RENT, MAP_TYPE_ACCESS } from '../constants';
 import ApiService from './api-service';
 
-import SuumoLegend from 'react-svg-loader!./suumo-legend.svg';
+import SuumoLegend from 'react-svg-loader!./legend.svg';
 
 const GeoJSON = require('json-loader!../../data/tokyo.geojson');
 const Suumo = JSON.parse(require('json-loader!../../data/suumo.json'));
@@ -628,7 +628,7 @@ class App extends React.Component {
 const properties = withProps({
   googleMapURL: "https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=geometry,drawing,places&key=AIzaSyDEG16WeMaOoAtxtKMfp0YUEM2S2CTksh0",
   loadingElement: <div style={{ height: `100%` }} />,
-  containerElement: <div style={{ height: `800px` }} />,
+  containerElement: <div style={{ height: `900px` }} />,
   mapElement: <div style={{ height: `100%` }} />,
 });
 
