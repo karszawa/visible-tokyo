@@ -493,64 +493,121 @@ class InformationPanel extends React.Component {
     super(props);
 
     this.state = {
-      formattedAddress: "",
-      duration: ""
+      originFormattedAddress: "",
+      destinationFormattedAddress: "",
+      durations: {},
     };
   }
 
   componentWillReceiveProps(nextProps) {
-    if (nextProps.origin === this.props.origin && nextProps.destination === this.props.destination) {
-      return;
+    if (nextProps.destination) {
+      apiService.getGeocode(nextProps.destination).then(result => {
+        this.setState({ destinationFormattedAddress: result });
+      });
     }
 
-    apiService.getGeocode(nextProps.origin).then(result => {
-      this.setState({ formattedAddress: result });
-
-      if (!nextProps.destination) {
-        return
-      }
-
-      var service = new window.google.maps.DistanceMatrixService();
-      service.getDistanceMatrix({
-        origins: [ nextProps.origin ],
-        destinations: [ nextProps.destination ],
-        travelMode: 'TRANSIT',
-        // transitOptions: TransitOptions,
-        // drivingOptions: DrivingOptions,
-        // unitSystem: UnitSystem,
-        // avoidHighways: Boolean,
-        // avoidTolls: Boolean,
-      }, (response, status) => {
-        console.log(response);
-        if (response.rows[0].elements[0].duration) {
-          this.setState({ duration: response.rows[0].elements[0].duration.text });
-        }
+    if (nextProps.origin) {
+      apiService.getGeocode(nextProps.origin).then(result => {
+        this.setState({ originFormattedAddress: result });
       });
+    }
+
+    if (!nextProps.origin || !nextProps.destination) {
+      return
+    }
+
+    this.setDistances(nextProps.origin, nextProps.destination);
+  }
+
+  setDistances(origin, destination) {
+    const service = new window.google.maps.DistanceMatrixService();
+
+    service.getDistanceMatrix({
+      origins: [ origin ],
+      destinations: [ destination ],
+      travelMode: 'TRANSIT',
+      transitOptions: { modes: [ 'RAIL' ] },
+    }, (response, status) => {
+      console.log(response);
+
+      if (response.rows[0].elements[0].duration) {
+        this.setState({
+          durations: Object.assign(this.state.durations, {
+            Transit: response.rows[0].elements[0].duration.text
+          })
+        });
+      }
+    });
+
+    service.getDistanceMatrix({
+      origins: [ origin ],
+      destinations: [ destination ],
+      travelMode: 'WALKING',
+    }, (response, status) => {
+      console.log(response);
+
+      if (response.rows[0].elements[0].duration) {
+        this.setState({
+          durations: Object.assign(this.state.durations, {
+            Walking: response.rows[0].elements[0].duration.text
+          })
+        });
+      }
+    });
+
+    service.getDistanceMatrix({
+      origins: [ origin ],
+      destinations: [ destination ],
+      travelMode: 'DRIVING',
+    }, (response, status) => {
+      console.log(response);
+
+      if (response.rows[0].elements[0].duration) {
+        this.setState({
+          durations: Object.assign(this.state.durations, {
+            Driving: response.rows[0].elements[0].duration.text
+          })
+        });
+      }
     });
   }
 
   render() {
-    console.log(this.state.formattedAddress);
+    console.log(this.state.originFormattedAddress);
 
-    if (!this.props.origin || !this.props.destination || !this.state.formattedAddress) {
-      return null;
-    }
-
-    const lines = Stations.filter(station =>
-      getDistanceFromLatLonInKm(station.lat, station.lng, this.props.origin.lat, this.props.origin.lng) <= 0.3
-    ).map(station => station.line).filter((x, i, self) =>
-      self.indexOf(x) === i).map((line, i) =>
-      <li key={i}>・{ line }</li>
+    const duration = Object.keys(this.state.durations).map(key =>
+      <div className="duration-line" key={ key }>
+        <div>{ key }</div>
+        <div>{ this.state.durations[key] }</div>
+      </div>
     );
 
     return (
       <InformationContainer>
-        <InformationTitle>{ this.state.formattedAddress.replace(/.+\d\d\d-\d\d\d\d /, '') }</InformationTitle>
-        <div>目的地までの距離: { this.state.duration }</div>
-        <div style={{ marginBttom: '20px', marginTop: '20px' }}>300m以内の駅</div>
-        <ul>
-          { lines || 'なし' }
-        </ul>
+        <CustomSearchBox
+          onPlacesChanged={ this.props.onPlacesChanged }
+        />
+
+        <dl>
+          <dt>Destination</dt>
+          <dd>
+            { this.state.destinationFormattedAddress ?
+              this.state.destinationFormattedAddress.replace(/.+\d\d\d-\d\d\d\d /, '')
+            :
+            <div className="placeholder">Search from text box</div>
+            }
+          </dd>
+          <dt>Depature place</dt>
+          <dd>
+            { this.state.originFormattedAddress ?
+              this.state.originFormattedAddress.replace(/.+\d\d\d-\d\d\d\d /, '')
+            :
+            <div className="placeholder">Click a location</div>
+            }
+          </dd>
+          { Object.keys(this.state.durations).length !== 0 && <dt>Duration</dt> }
+          { Object.keys(this.state.durations).length !== 0 && <dd>{ duration }</dd> }
+        </dl>
       </InformationContainer>
     );
   }
