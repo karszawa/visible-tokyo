@@ -2,13 +2,11 @@ import React from 'react';
 import { compose, withProps } from 'recompose';
 import { withScriptjs, withGoogleMap, GoogleMap, Marker, Polygon, Circle, InfoWindow, OverlayView } from 'react-google-maps';
 import { SearchBox } from 'react-google-maps/lib/components/places/SearchBox';
-import { SearchInput, ControlButtonWrapper, ControlButton, SelectBoxWrapper, SelectBoxColumn, LineBadge, ShadowBox, LegendWrapper, InformationContainer, InformationTitle } from './App.components';
+import { SearchInput, ControlButtonWrapper, ControlButton, SelectBoxWrapper, SelectBoxColumn, LineBadge, ShadowBox, LegendWrapper, InformationContainer, InformationTitle, SelectBoxLabel, SelectBoxLineBadge, GeoLegend } from './App.components';
 import { MAP_TYPE_RENT, MAP_TYPE_ACCESS } from '../constants';
 import ApiService from './api-service';
 
-import SuumoLegend from './legend.svg';
-
-const GeoJSON = require('../data/tokyo.geojson');
+const GeoJSON = require('../data/tokyo.json');
 const Suumo = JSON.parse(require('../data/suumo.json'));
 const Stations = require('../data/stations.json');
 const lineData = require('../data/lines.json');
