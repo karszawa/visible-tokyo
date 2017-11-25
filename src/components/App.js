@@ -97,16 +97,16 @@ class App extends React.Component {
 
     return (
         <Circle
-            key={"origin-circle-100"}
-            radius={100}
-            center={this.state.origin}
+          key={"origin-circle-100"}
+          radius={100}
+          center={this.state.origin}
             options={{ fillColor: 'red', fillOpacity: 0.3, strokeWeight: 0.5, strokeColor: 'white', strokeOpacity: 0.5 }}
         />,
         <Circle
-           key={"origin-circle-20"}
-           radius={20}
-           center={this.state.origin}
-           options={{ fillColor: 'red', fillOpacity: 0.8, strokeWeight: 0 }}
+          key={"origin-circle-20"}
+          radius={20}
+          center={this.state.origin}
+          options={{ fillColor: 'red', fillOpacity: 0.8, strokeWeight: 0 }}
         />
     );
   }
