@@ -665,17 +665,14 @@ class App extends React.Component {
         zoom={ this.state.zoom }
         onClick={ ::this.onChangeOrigin }
       >
-        <CustomSearchBox
+        { this.state.destination && <Marker position={this.state.destination} /> }
+
+        <InformationPanel
+          origin={this.state.origin}
+          destination={this.state.destination}
           onPlacesChanged={ ::this.onPlacesChanged }
         />
 
-        { this.state.destination && <Marker position={this.state.destination} /> }
-        { this.state.origin &&
-          <InformationPanel
-            origin={this.state.origin}
-            destination={this.state.destination}
-          />
-        }
         { this.state.origin && [
           <Circle
             key={"origin-circle-100"}
