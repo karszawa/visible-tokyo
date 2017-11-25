@@ -29,7 +29,7 @@ function average(arr, fn) {
 };
 
 function heatMapColorforValue(value) {
-  const h = (1.0 - value) * 240
+  const h = (1.0 - value) * 250;
   return `hsl(${h}, 100%, 50%)`;
 }
 
