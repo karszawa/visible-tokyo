@@ -361,7 +361,9 @@ class RentMap extends React.Component {
 
     this.state = {
       targets: [ 15, 20 ],
-      target: null
+      target: null,
+      maxRent: 100,
+      minRent: 0
     };
   }
 
@@ -374,14 +376,21 @@ class RentMap extends React.Component {
       >
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <span>{ this.state.target.location }</span>
-          <span>{ Math.floor(this.state.target.rent * 10) / 10 }万円</span>
+          <span>{ isNaN(this.state.target.rent) ? 'データなし' : `${Math.floor(this.state.target.rent * 10) / 10}万円` }</span>
         </div>
       </InfoWindow>
     );
 
     const legend = (
       <LegendWrapper key="legend-wrapper">
-        <SuumoLegend width={400} height={100} />
+        <GeoLegend/>
+        <div className="numbers">
+          { [0,1,2,3,4].map(i =>
+            <span>
+              { Math.floor(this.state.minRent + (this.state.maxRent - this.state.minRent) * i / 4)}万円
+            </span>
+          )}
+        </div>
       </LegendWrapper>
     );
 
@@ -399,13 +408,32 @@ class RentMap extends React.Component {
 
   renderPolygons() {
     console.log('Try to render polygons.');
-    if (renderedPolygons[this.state.targets]) {
+    const key = this.state.targets.join(',');
+
+    if (renderedPolygons[key]) {
       console.log('Use memo.');
-      return renderedPolygons[this.state.targets];
+      return renderedPolygons[key];
     }
     console.log('Render polygons.');
 
-    renderedPolygons[this.state.targets] = GeoJSON.features.map((feature, i) => {
+    let maxRent = 0;
+    let minRent = 100;
+
+    GeoJSON.features.map(feature => {
+      const rent = this.getPriceFromFeature(feature);
+
+      if (!isNaN(rent)) {
+        maxRent = Math.max(rent, maxRent);
+        minRent = Math.min(rent, minRent);
+      }
+    });
+
+    console.log(`Max rent: ${maxRent}`);
+    console.log(`Min rent: ${minRent}`);
+
+    this.setState({ maxRent: maxRent, minRent: minRent });
+
+    renderedPolygons[key] = GeoJSON.features.map((feature, i) => {
       const paths = feature.geometry.coordinates[0].map(ary => { return { lat: ary[1], lng: ary[0] } });
       const avg = this.getPriceFromFeature(feature);
       const target = {
@@ -424,7 +452,7 @@ class RentMap extends React.Component {
               strokeColor: '#000000',
               strokeOpacity: 0,
               strokeWeight: 0,
-            fillColor: heatMapColorforValue((avg - 5) / 10), // `rgb(${color}, 0, 0)`,
+            fillColor: heatMapColorforValue((avg - minRent) / (maxRent - minRent)),
             fillOpacity: isNaN(avg) ? 0 : 0.35
           }}
         />
