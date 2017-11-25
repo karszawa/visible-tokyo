@@ -2,13 +2,13 @@ import React from 'react';
 import { compose, withProps } from 'recompose';
 import { withScriptjs, withGoogleMap, GoogleMap, Marker, Polygon, Circle, InfoWindow, OverlayView } from 'react-google-maps';
 import { SearchBox } from 'react-google-maps/lib/components/places/SearchBox';
-import { SearchInput, ControlButtonWrapper, ControlButton, SelectBoxWrapper, SelectBoxColumn, LineBadge, ShadowBox, LegendWrapper, InformationContainer, InformationTitle } from './App.components';
+import { SearchInput, ControlButtonWrapper, ControlButton, SelectBoxWrapper, SelectBoxColumn, LineBadge, ShadowBox, LegendWrapper, InformationContainer, InformationTitle, SelectBoxLabel, SelectBoxLineBadge, GeoLegend } from './App.components';
 import { MAP_TYPE_RENT, MAP_TYPE_ACCESS } from '../constants';
 import ApiService from './api-service';
 
-import SuumoLegend from './legend.svg';
+// import SuumoLegend from './legend.svg';
 
-const GeoJSON = require('../data/tokyo.geojson');
+const GeoJSON = require('../data/tokyo.json');
 const Suumo = JSON.parse(require('../data/suumo.json'));
 const Stations = require('../data/stations.json');
 const lineData = require('../data/lines.json');
@@ -31,7 +31,7 @@ function average(arr, fn) {
 };
 
 function heatMapColorforValue(value) {
-  const h = (1.0 - value) * 240
+  const h = (1.0 - value) * 250;
   return `hsl(${h}, 100%, 50%)`;
 }
 
@@ -78,10 +78,11 @@ class CustomSearchBox extends React.Component {
     return (
       <SearchBox
         ref={ e => this.searchBox = e }
-        controlPosition={ window.google.maps.ControlPosition.TOP_LEFT }
+        controlPosition={ window.google.maps.ControlPosition.TOP_RIGHT }
         onPlacesChanged={ ::this.onPlacesChanged }
       >
         <SearchInput
+          style={{ zIndex: 100 }}
           type="text"
           placeholder="Search your destination"
         />
@@ -147,11 +148,18 @@ class SelectBox extends React.Component {
             checked={ this.state.checked.some(v => v === keyword) }
             style={{ marginRight: '10px' }}
           />
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '200px' }}>
-            <label htmlFor={`${keyword}`}>{ this.props.names[i] }</label>
-            { this.props.notations && <div style={{ backgroundColor: lineToColorMap[keyword], width: '20px', height: '20px', borderRadius: '5px', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white', fontSize: '11px' }}>{ this.props.notations[i] }</div>}
-            </div>
-            </SelectBoxColumn>
+          <SelectBoxLabel>
+            <label htmlFor={`${keyword}`}>
+              { this.props.names[i] }
+            </label>
+
+            { this.props.notations &&
+              <SelectBoxLineBadge color={ lineToColorMap[keyword] }>
+                { this.props.notations[i] }
+              </SelectBoxLineBadge>
+            }
+          </SelectBoxLabel>
+        </SelectBoxColumn>
       );
     });
 
@@ -356,7 +364,9 @@ class RentMap extends React.Component {
 
     this.state = {
       targets: [ 15, 20 ],
-      target: null
+      target: null,
+      maxRent: 100,
+      minRent: 0
     };
   }
 
@@ -369,14 +379,21 @@ class RentMap extends React.Component {
       >
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <span>{ this.state.target.location }</span>
-          <span>{ Math.floor(this.state.target.rent * 10) / 10 }万円</span>
+          <span>{ isNaN(this.state.target.rent) ? 'データなし' : `${Math.floor(this.state.target.rent * 10) / 10}万円` }</span>
         </div>
       </InfoWindow>
     );
 
     const legend = (
       <LegendWrapper key="legend-wrapper">
-        <SuumoLegend width={400} height={100} />
+        <GeoLegend/>
+        <div className="numbers">
+          { [0,1,2,3,4].map(i =>
+            <span>
+              { Math.floor(this.state.minRent + (this.state.maxRent - this.state.minRent) * i / 4)}
+            </span>
+          )}
+        </div>
       </LegendWrapper>
     );
 
@@ -394,13 +411,32 @@ class RentMap extends React.Component {
 
   renderPolygons() {
     console.log('Try to render polygons.');
-    if (renderedPolygons[this.state.targets]) {
+    const key = this.state.targets.join(',');
+
+    if (renderedPolygons[key]) {
       console.log('Use memo.');
-      return renderedPolygons[this.state.targets];
+      return renderedPolygons[key];
     }
     console.log('Render polygons.');
 
-    renderedPolygons[this.state.targets] = GeoJSON.features.map((feature, i) => {
+    let maxRent = 0;
+    let minRent = 100;
+
+    GeoJSON.features.map(feature => {
+      const rent = this.getPriceFromFeature(feature);
+
+      if (!isNaN(rent)) {
+        maxRent = Math.max(rent, maxRent);
+        minRent = Math.min(rent, minRent);
+      }
+    });
+
+    console.log(`Max rent: ${maxRent}`);
+    console.log(`Min rent: ${minRent}`);
+
+    this.setState({ maxRent: maxRent, minRent: minRent });
+
+    renderedPolygons[key] = GeoJSON.features.map((feature, i) => {
       const paths = feature.geometry.coordinates[0].map(ary => { return { lat: ary[1], lng: ary[0] } });
       const avg = this.getPriceFromFeature(feature);
       const target = {
@@ -419,7 +455,7 @@ class RentMap extends React.Component {
               strokeColor: '#000000',
               strokeOpacity: 0,
               strokeWeight: 0,
-            fillColor: heatMapColorforValue((avg - 5) / 10), // `rgb(${color}, 0, 0)`,
+            fillColor: heatMapColorforValue((avg - minRent) / (maxRent - minRent)),
             fillOpacity: isNaN(avg) ? 0 : 0.35
           }}
         />
@@ -460,64 +496,121 @@ class InformationPanel extends React.Component {
     super(props);
 
     this.state = {
-      formattedAddress: "",
-      duration: ""
+      originFormattedAddress: "",
+      destinationFormattedAddress: "",
+      durations: {},
     };
   }
 
   componentWillReceiveProps(nextProps) {
-    if (nextProps.origin === this.props.origin && nextProps.destination === this.props.destination) {
-      return;
+    if (nextProps.destination) {
+      apiService.getGeocode(nextProps.destination).then(result => {
+        this.setState({ destinationFormattedAddress: result });
+      });
     }
 
-    apiService.getGeocode(nextProps.origin).then(result => {
-      this.setState({ formattedAddress: result });
-
-      if (!nextProps.destination) {
-        return
-      }
-
-      var service = new window.google.maps.DistanceMatrixService();
-      service.getDistanceMatrix({
-        origins: [ nextProps.origin ],
-        destinations: [ nextProps.destination ],
-        travelMode: 'TRANSIT',
-        // transitOptions: TransitOptions,
-        // drivingOptions: DrivingOptions,
-        // unitSystem: UnitSystem,
-        // avoidHighways: Boolean,
-        // avoidTolls: Boolean,
-      }, (response, status) => {
-        console.log(response);
-        if (response.rows[0].elements[0].duration) {
-          this.setState({ duration: response.rows[0].elements[0].duration.text });
-        }
+    if (nextProps.origin) {
+      apiService.getGeocode(nextProps.origin).then(result => {
+        this.setState({ originFormattedAddress: result });
       });
+    }
+
+    if (!nextProps.origin || !nextProps.destination) {
+      return
+    }
+
+    this.setDistances(nextProps.origin, nextProps.destination);
+  }
+
+  setDistances(origin, destination) {
+    const service = new window.google.maps.DistanceMatrixService();
+
+    service.getDistanceMatrix({
+      origins: [ origin ],
+      destinations: [ destination ],
+      travelMode: 'TRANSIT',
+      transitOptions: { modes: [ 'RAIL' ] },
+    }, (response, status) => {
+      console.log(response);
+
+      if (response.rows[0].elements[0].duration) {
+        this.setState({
+          durations: Object.assign(this.state.durations, {
+            Transit: response.rows[0].elements[0].duration.text
+          })
+        });
+      }
+    });
+
+    service.getDistanceMatrix({
+      origins: [ origin ],
+      destinations: [ destination ],
+      travelMode: 'WALKING',
+    }, (response, status) => {
+      console.log(response);
+
+      if (response.rows[0].elements[0].duration) {
+        this.setState({
+          durations: Object.assign(this.state.durations, {
+            Walking: response.rows[0].elements[0].duration.text
+          })
+        });
+      }
+    });
+
+    service.getDistanceMatrix({
+      origins: [ origin ],
+      destinations: [ destination ],
+      travelMode: 'DRIVING',
+    }, (response, status) => {
+      console.log(response);
+
+      if (response.rows[0].elements[0].duration) {
+        this.setState({
+          durations: Object.assign(this.state.durations, {
+            Driving: response.rows[0].elements[0].duration.text
+          })
+        });
+      }
     });
   }
 
   render() {
-    console.log(this.state.formattedAddress);
+    console.log(this.state.originFormattedAddress);
 
-    if (!this.props.origin || !this.props.destination || !this.state.formattedAddress) {
-      return null;
-    }
-
-    const lines = Stations.filter(station =>
-      getDistanceFromLatLonInKm(station.lat, station.lng, this.props.origin.lat, this.props.origin.lng) <= 0.3
-    ).map(station => station.line).filter((x, i, self) =>
-      self.indexOf(x) === i).map((line, i) =>
-      <li key={i}>・{ line }</li>
+    const duration = Object.keys(this.state.durations).map(key =>
+      <div className="duration-line" key={ key }>
+        <div>{ key }</div>
+        <div>{ this.state.durations[key] }</div>
+      </div>
     );
 
     return (
       <InformationContainer>
-        <InformationTitle>{ this.state.formattedAddress.replace(/.+\d\d\d-\d\d\d\d /, '') }</InformationTitle>
-        <div>目的地までの距離: { this.state.duration }</div>
-        <div style={{ marginBttom: '20px', marginTop: '20px' }}>300m以内の駅</div>
-        <ul>
-          { lines || 'なし' }
-        </ul>
+        <CustomSearchBox
+          onPlacesChanged={ this.props.onPlacesChanged }
+        />
+
+        <dl>
+          <dt>Destination</dt>
+          <dd>
+            { this.state.destinationFormattedAddress ?
+              this.state.destinationFormattedAddress.replace(/.+\d\d\d-\d\d\d\d /, '')
+            :
+            <div className="placeholder">Search from text box</div>
+            }
+          </dd>
+          <dt>Depature place</dt>
+          <dd>
+            { this.state.originFormattedAddress ?
+              this.state.originFormattedAddress.replace(/.+\d\d\d-\d\d\d\d /, '')
+            :
+            <div className="placeholder">Click a location</div>
+            }
+          </dd>
+          { Object.keys(this.state.durations).length !== 0 && <dt>Duration</dt> }
+          { Object.keys(this.state.durations).length !== 0 && <dd>{ duration }</dd> }
+        </dl>
       </InformationContainer>
     );
   }
@@ -552,7 +645,7 @@ class App extends React.Component {
 
   updateAccess(origin) {
     const lines = Stations.filter(station =>
-      getDistanceFromLatLonInKm(station.lat, station.lng, origin.lat, origin.lng) <= 1
+      getDistanceFromLatLonInKm(station.lat, station.lng, origin.lat, origin.lng) <= 0.5
     ).map(station => station.line).filter((x, i, self) =>
       self.indexOf(x) === i
     ).map((line, i) =>
@@ -575,17 +668,14 @@ class App extends React.Component {
         zoom={ this.state.zoom }
         onClick={ ::this.onChangeOrigin }
       >
-        <CustomSearchBox
+        { this.state.destination && <Marker position={this.state.destination} /> }
+
+        <InformationPanel
+          origin={this.state.origin}
+          destination={this.state.destination}
           onPlacesChanged={ ::this.onPlacesChanged }
         />
 
-        { this.state.destination && <Marker position={this.state.destination} /> }
-        { this.state.origin &&
-          <InformationPanel
-            origin={this.state.origin}
-            destination={this.state.destination}
-          />
-        }
         { this.state.origin && [
           <Circle
             key={"origin-circle-100"}
