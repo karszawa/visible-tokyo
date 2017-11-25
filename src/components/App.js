@@ -642,7 +642,7 @@ class App extends React.Component {
 
   updateAccess(origin) {
     const lines = Stations.filter(station =>
-      getDistanceFromLatLonInKm(station.lat, station.lng, origin.lat, origin.lng) <= 1
+      getDistanceFromLatLonInKm(station.lat, station.lng, origin.lat, origin.lng) <= 0.5
     ).map(station => station.line).filter((x, i, self) =>
       self.indexOf(x) === i
     ).map((line, i) =>
