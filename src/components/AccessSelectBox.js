@@ -1,6 +1,6 @@
 import * as React from "react";
 import {SelectBoxColumn, SelectBoxWrapper} from "./App.components";
-import {lineData, lineToColorMap} from "../lib/data";
+import {LINE_DATA, LINE_TO_COLOR_MAP} from "../lib/data";
 
 class AccessSelectBoxBase extends React.Component {
     constructor(props) {
@@ -45,7 +45,7 @@ class AccessSelectBoxBase extends React.Component {
                     />
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '200px' }}>
                         <label htmlFor={`${keyword}`}>{ this.props.names[i] }</label>
-                        { this.props.notations && <div style={{ backgroundColor: lineToColorMap[keyword], width: '20px', height: '20px', borderRadius: '5px', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white', fontSize: '11px' }}>{ this.props.notations[i] }</div>}
+                        { this.props.notations && <div style={{ backgroundColor: LINE_TO_COLOR_MAP[keyword], width: '20px', height: '20px', borderRadius: '5px', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white', fontSize: '11px' }}>{ this.props.notations[i] }</div>}
                     </div>
                 </SelectBoxColumn>
             );
@@ -60,9 +60,9 @@ class AccessSelectBoxBase extends React.Component {
 }
 
 const AccessSelectBox = (props) => {
-    const lines = lineData.map(line => line.name);
-    const keywords = lineData.map(line => line.name);
-    const notations = lineData.map(line => line.notation);
+    const lines = LINE_DATA.map(line => line.name);
+    const keywords = LINE_DATA.map(line => line.name);
+    const notations = LINE_DATA.map(line => line.notation);
 
     return (
         <AccessSelectBoxBase

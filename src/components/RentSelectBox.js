@@ -1,6 +1,6 @@
 import * as React from "react";
 import {SelectBoxColumn, SelectBoxLabel, SelectBoxLineBadge, SelectBoxWrapper} from "./App.components";
-import {lineToColorMap} from "../lib/data";
+import {LINE_TO_COLOR_MAP} from "../lib/data";
 
 class RentSelectBoxBase extends React.Component {
     constructor(props) {
@@ -43,7 +43,7 @@ class RentSelectBoxBase extends React.Component {
                         </label>
 
                         { this.props.notations &&
-                        <SelectBoxLineBadge color={ lineToColorMap[keyword] }>
+                        <SelectBoxLineBadge color={ LINE_TO_COLOR_MAP[keyword] }>
                             { this.props.notations[i] }
                         </SelectBoxLineBadge>
                         }

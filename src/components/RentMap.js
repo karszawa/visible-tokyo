@@ -2,7 +2,7 @@ import * as React from "react";
 import {InfoWindow, Polygon} from "react-google-maps";
 import {GeoLegend, LegendWrapper} from "./App.components";
 import RentSelectBox from "./RentSelectBox";
-import {GeoJSON, Suumo} from "../lib/data";
+import {GEO_JSON, Suumo} from "../lib/data";
 import {average, heatMapColorforValue} from "../lib/lib";
 
 let renderedPolygons = {};
@@ -73,7 +73,7 @@ export default class RentMap extends React.Component {
         let maxRent = 0;
         let minRent = 100;
 
-        GeoJSON.features.forEach(feature => {
+        GEO_JSON.features.forEach(feature => {
             const rent = this.getPriceFromFeature(feature);
 
             if (!isNaN(rent)) {
@@ -87,7 +87,7 @@ export default class RentMap extends React.Component {
 
         this.setState({ maxRent: maxRent, minRent: minRent });
 
-        renderedPolygons[key] = GeoJSON.features.map((feature, i) => {
+        renderedPolygons[key] = GEO_JSON.features.map((feature, i) => {
             const paths = feature.geometry.coordinates[0].map(ary => { return { lat: ary[1], lng: ary[0] } });
             const avg = this.getPriceFromFeature(feature);
             const target = {

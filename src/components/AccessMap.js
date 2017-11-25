@@ -1,5 +1,5 @@
 import * as React from "react";
-import {lineToColorMap, lineToMarkMap, STATIONS} from "../lib/data";
+import {LINE_TO_COLOR_MAP, LINE_TO_MARK_MAP, STATIONS} from "../lib/data";
 import {LineBadge, ShadowBox} from "./App.components";
 import {Circle, OverlayView} from "react-google-maps";
 import {getPixelPositionOffset} from "../lib/lib";
@@ -52,10 +52,10 @@ export default class AccessMap extends React.Component {
             return (
                 <LineBadge
                     key={`${position.lat}:${position.lng}:${line}`}
-                    color={lineToColorMap[line]}
+                    color={LINE_TO_COLOR_MAP[line]}
                 >
                     <div>
-                        { lineToMarkMap[line] || 'S' }
+                        { LINE_TO_MARK_MAP[line] || 'S' }
                     </div>
                 </LineBadge>
             );
@@ -68,7 +68,7 @@ export default class AccessMap extends React.Component {
                 center={{ lat: Number(position.lat), lng: Number(position.lng) }}
                 clickable={false}
                 options={{
-                    fillColor: lineToColorMap[line],
+                    fillColor: LINE_TO_COLOR_MAP[line],
                     opacity: .3,
                     strokeColor: 'white',
                     strokeWeight: .5,
