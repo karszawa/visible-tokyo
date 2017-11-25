@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "visible-tokyo": "visible-tokyo",
+    "default": "visible-tokyo"
+  },
+  "hosting": {
+    "public": "build"
+  }
+}
