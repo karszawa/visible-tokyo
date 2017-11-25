@@ -689,8 +689,8 @@ class App extends React.Component {
         ]}
 
         <ControlBox
-          names={[ 'Rent', 'Access', 'Altitude', 'Temp' ]}
-          keywords={[ MAP_TYPE_RENT, MAP_TYPE_ACCESS, 'altitude', 'temp' ]}
+          names={[ 'Rent', 'Access' ]}
+          keywords={[ MAP_TYPE_RENT, MAP_TYPE_ACCESS ]}
           onClick={ ::this.onClickControlBox }
         />
 
