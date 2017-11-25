@@ -76,7 +76,7 @@ class CustomSearchBox extends React.Component {
     return (
       <SearchBox
         ref={ e => this.searchBox = e }
-        controlPosition={ window.google.maps.ControlPosition.TOP_LEFT }
+        controlPosition={ window.google.maps.ControlPosition.TOP_RIGHT }
         onPlacesChanged={ ::this.onPlacesChanged }
       >
         <SearchInput
