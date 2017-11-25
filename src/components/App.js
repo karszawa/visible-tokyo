@@ -145,11 +145,18 @@ class SelectBox extends React.Component {
             checked={ this.state.checked.some(v => v === keyword) }
             style={{ marginRight: '10px' }}
           />
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '200px' }}>
-            <label htmlFor={`${keyword}`}>{ this.props.names[i] }</label>
-            { this.props.notations && <div style={{ backgroundColor: lineToColorMap[keyword], width: '20px', height: '20px', borderRadius: '5px', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white', fontSize: '11px' }}>{ this.props.notations[i] }</div>}
-            </div>
-            </SelectBoxColumn>
+          <SelectBoxLabel>
+            <label htmlFor={`${keyword}`}>
+              { this.props.names[i] }
+            </label>
+
+            { this.props.notations &&
+              <SelectBoxLineBadge color={ lineToColorMap[keyword] }>
+                { this.props.notations[i] }
+              </SelectBoxLineBadge>
+            }
+          </SelectBoxLabel>
+        </SelectBoxColumn>
       );
     });
 
