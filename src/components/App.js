@@ -100,7 +100,7 @@ class App extends React.Component {
           key={"origin-circle-100"}
           radius={100}
           center={this.state.origin}
-            options={{ fillColor: 'red', fillOpacity: 0.3, strokeWeight: 0.5, strokeColor: 'white', strokeOpacity: 0.5 }}
+          options={{ fillColor: 'red', fillOpacity: 0.3, strokeWeight: 0.5, strokeColor: 'white', strokeOpacity: 0.5 }}
         />,
         <Circle
           key={"origin-circle-20"}
