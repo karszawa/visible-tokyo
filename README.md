@@ -22,7 +22,7 @@ $ yarn -v
 ### Build
 
 ```
-$ git clone git@github.com:InfovisHandsOn/A_make-tokyo-great-again.git
+$ git clone --depth 1 git@github.com:InfovisHandsOn/A_make-tokyo-great-again.git
 $ cd make-tokyo-great-again
 $ yarn
 $ npm start # visit localhost:3000
